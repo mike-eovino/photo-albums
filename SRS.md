@@ -14,13 +14,13 @@ Photo Albums is a personal, static website that shows trip photos with where and
 
 ## 2. Album: Chennai, November 2026
 
-All 75 photos have GPS coordinates and a capture time. They were taken on a Pixel 10 Pro Fold over 4 days, 15–18 Nov 2026 (IST, UTC+05:30). 12 are Motion Photos. The originals total about 330 MB, and the web copies about 30 MB.
+All 74 photos have GPS coordinates and a capture time. They were taken on a Pixel 10 Pro Fold over 4 days, 15–18 Nov 2026 (IST, UTC+05:30). 12 are Motion Photos. The originals total about 330 MB, and the web copies about 30 MB.
 
 I matched place names to the coordinates from my own knowledge of the area, and wrote the captions after looking at each photo. Both are in the album folder for the owner to check and edit.
 
 | Date | Time (IST) | Place | Tamil name | Photos |
 | --- | --- | --- | --- | --- |
-| Sun 15 Nov | 07:56–08:07 | Chennai International Airport | சென்னை பன்னாட்டு வானூர்தி நிலையம் | 2 |
+| Sun 15 Nov | 07:56 | Chennai International Airport | சென்னை பன்னாட்டு வானூர்தி நிலையம் | 1 |
 | Sun 15 Nov | 18:43–18:44 | Kapaleeshwarar Temple, Mylapore | கபாலீசுவரர் கோயில் | 2 |
 | Sun 15 Nov | 19:04 | Mylapore streets | மயிலாப்பூர் தெருக்கள் | 2 |
 | Mon 16 Nov | 09:51–10:59 | OMR IT corridor (Ford + Red Hat event) | பழைய மாமல்லபுரம் சாலை | 5 |
@@ -65,7 +65,7 @@ Priority **Must** and **Should** are in v1. **Could** is deferred.
 | FR-14 | **Captions:** each album has a `captions.json` with one caption per photo, drafted by Claude for the owner to edit. | Must |
 | FR-15 | **Motion Photos:** `.MP.jpg` files show a badge. Playing the embedded video clip is deferred. | Should (badge) / Could (playback) |
 | FR-16 | **Nearby places:** the viewer lists other places within 2 km. | Could |
-| FR-17 | Re-running the build after adding or removing photos updates the album, including removing images of deleted photos. | Must |
+| FR-17 | Re-running the build after adding, removing or changing photos updates the album, including removing images of deleted photos. It ends with a summary line of photos added, updated, removed and unchanged. See *Change detection* in section 6. | Must |
 | FR-18 | **Slideshow:** plays the currently filtered photos, advancing every 4 seconds, with play and pause in the viewer and a progress bar. | Must |
 | FR-19 | **Album list:** the home page shows one card per album with its cover photo, titles, dates and counts. | Must |
 | FR-20 | **Adding an album:** create `albums/<id>/` with `album.json`, `places.json`, `captions.json` and an `originals/` folder, then run `npm run photos`. No code changes are needed. | Must |
@@ -111,6 +111,22 @@ The photo build runs on the owner's machine, because only it has the originals. 
 | `places.json` | per place: `id`, `name`, `nameLocal`, `area`, `lat`, `lon`, `radiusM`, `description` | Owner |
 | `captions.json` | photo id → caption | Owner |
 | `generated/photos.json` | per photo: `id`, `file`, `takenAt`, `lat`, `lon`, `alt`, `width`, `height`, `camera`, `motion`, `thumb`, `display` | Build only |
+| `generated/build-manifest.json` | the image settings used, and per photo: `file` and a SHA-256 of the original | Build only |
+
+**Change detection**
+
+`npm run photos` compares each album's `originals/` with what it built last time, and ends with a line such as `chennai-2026: 3 added, 1 updated, 2 removed, 69 unchanged`.
+
+| Change | Detected? | How |
+| --- | --- | --- |
+| **Added** | Yes | A new original has no WebP copies yet, so both sizes are created. |
+| **Removed** | Yes | Any `.webp` with no matching original is deleted. `photos.json` is rewritten from scratch every run, so the photo drops out. |
+| **Changed** | Yes | The WebP copies are rebuilt when the original's SHA-256 differs from the one in `build-manifest.json`. File timestamps are not used, so an edited original with an older date (for example from `cp -p` or a Google Takeout export) is still caught. |
+| **Image settings changed** | Yes | The manifest records the sizes, WebP quality and a pipeline version. If any of them change, every photo is rebuilt. |
+| **WebP copy deleted by hand** | Yes | A missing copy is recreated. |
+| **EXIF edited** | Yes | EXIF is re-read from every original on every run, so `photos.json` is always current even when the images are skipped. |
+
+Hashing the originals takes well under a second per album, so an unchanged re-run is fast (NFR-2). Two originals that differ only by `.MP` (for example `X.jpg` and `X.MP.jpg`) would share a photo id. This does not happen with Pixel file names, so it is not handled.
 
 **Project layout**
 
