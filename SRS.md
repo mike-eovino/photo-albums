@@ -113,7 +113,7 @@ The photo build runs on the owner's machine, because only it has the originals. 
 | `places.json` | per place: `id`, `name`, `nameLocal`, `area`, `lat`, `lon`, `radiusM`, `description` | Owner. The build removes places with no photos (FR-22). |
 | `captions.json` | photo id → caption | Owner. The build removes captions of deleted photos (FR-22). |
 | `generated/photos.json` | per photo: `id`, `file`, `takenAt`, `lat`, `lon`, `alt`, `width`, `height`, `camera`, `motion`, `thumb`, `display`, `v` (image version for cache busting, NFR-10) | Build only |
-| `generated/build-manifest.json` | the image settings used, and per photo: `file` and a SHA-256 of the original | Build only |
+| `generated/build-manifest.json` | the image settings used, and per photo: `file` and a SHA-256 of the original. Committed but not published. | Build only |
 
 **The photo build (`npm run photos`)**
 
@@ -184,7 +184,7 @@ photo-albums/
   app/
     scripts/build-photos.ts      npm run photos [album-id]
     src/                         main.ts, data.ts, places.ts, viewer.ts, map.ts, styles.css
-    vite.config.ts               serves and copies albums/*, never originals/
+    vite.config.ts               serves and copies albums/*, never originals/ or build-manifest.json
 ```
 
 ## 7. Decisions

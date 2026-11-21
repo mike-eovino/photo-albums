@@ -7,6 +7,8 @@ const ALBUMS_DIR = path.resolve(import.meta.dirname, '..', 'albums');
 // Album files the site may serve. originals/ is deliberately absent.
 const PUBLIC_FILES = ['album.json', 'places.json', 'captions.json'];
 const PUBLIC_DIR = 'generated';
+// Build-only files inside generated/ that the site doesn't need.
+const PRIVATE_GENERATED = ['build-manifest.json'];
 
 function albumIds(): string[] {
   return fs
@@ -46,7 +48,8 @@ function albumsPlugin(): Plugin {
         const [album, first, ...rest] = rel.split('/');
         const allowed =
           /^[\w-]+$/.test(album ?? '') &&
-          ((rest.length === 0 && PUBLIC_FILES.includes(first ?? '')) || (first === PUBLIC_DIR && rest.length > 0));
+          ((rest.length === 0 && PUBLIC_FILES.includes(first ?? '')) ||
+            (first === PUBLIC_DIR && rest.length > 0 && !PRIVATE_GENERATED.includes(rest.join('/'))));
         const file = path.resolve(ALBUMS_DIR, rel);
         if (!allowed || !file.startsWith(ALBUMS_DIR + path.sep) || !fs.existsSync(file)) return next();
         res.setHeader('Content-Type', MIME[path.extname(file)] ?? 'application/octet-stream');
@@ -64,7 +67,11 @@ function albumsPlugin(): Plugin {
           if (fs.existsSync(path.join(src, f))) fs.copyFileSync(path.join(src, f), path.join(dest, id, f));
         }
         if (fs.existsSync(path.join(src, PUBLIC_DIR))) {
-          fs.cpSync(path.join(src, PUBLIC_DIR), path.join(dest, id, PUBLIC_DIR), { recursive: true });
+          const genDir = path.join(src, PUBLIC_DIR);
+          fs.cpSync(genDir, path.join(dest, id, PUBLIC_DIR), {
+            recursive: true,
+            filter: (f) => !PRIVATE_GENERATED.includes(path.relative(genDir, f)),
+          });
         }
       }
     },
