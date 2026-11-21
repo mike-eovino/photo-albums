@@ -1,4 +1,10 @@
 {
+  "airport-area@2026-11-15": {
+    "place": "Chennai International Airport",
+    "date": "2026-11-15",
+    "checked": "2026-11-21",
+    "events": []
+  },
   "kapaleeshwarar@2026-11-15": {
     "place": "Kapaleeshwarar Temple",
     "date": "2026-11-15",
@@ -14,5 +20,63 @@
         "confidence": "high"
       }
     ]
+  },
+  "mylapore-tank@2026-11-15": {
+    "place": "Mylapore streets",
+    "date": "2026-11-15",
+    "checked": "2026-11-21",
+    "events": [
+      {
+        "name": "Skanda Sashti Soorasamharam at Kapaleeshwarar Temple",
+        "nameLocal": "கந்த சஷ்டி சூரசம்ஹாரம்",
+        "description": "The main day of the Skanda Sashti festival at Sri Kapaleeswarar Temple (Nov 9–17). Around 7 pm, the temple re-enacts Lord Murugan's victory over the demon Soorapadman on North Mada Street, and the event usually draws thousands of people.",
+        "startDate": "2026-11-15",
+        "endDate": "2026-11-15",
+        "sourceUrl": "https://www.mylaporetimes.com/2026/11/skanda-sashti-festival-at-sri-kapaleeswarar-temple-begins/",
+        "confidence": "high"
+      }
+    ]
+  },
+  "omr-navalur@2026-11-16": {
+    "place": "Navalur",
+    "date": "2026-11-16",
+    "checked": "2026-11-21",
+    "events": []
+  },
+  "guindy@2026-11-17": {
+    "place": "Guindy",
+    "date": "2026-11-17",
+    "checked": "2026-11-21",
+    "events": []
+  },
+  "arjunas-penance@2026-11-18": {
+    "place": "Arjuna's Penance and Krishna's Butter Ball",
+    "date": "2026-11-18",
+    "checked": "2026-11-21",
+    "events": []
+  },
+  "mahabalipuram-beach@2026-11-18": {
+    "place": "Mahabalipuram beach",
+    "date": "2026-11-18",
+    "checked": "2026-11-21",
+    "events": []
+  },
+  "pancha-rathas@2026-11-18": {
+    "place": "Pancha Rathas",
+    "date": "2026-11-18",
+    "checked": "2026-11-21",
+    "events": []
+  },
+  "santhome@2026-11-18": {
+    "place": "San Thome Basilica",
+    "date": "2026-11-18",
+    "checked": "2026-11-21",
+    "events": []
+  },
+  "shore-temple@2026-11-18": {
+    "place": "Shore Temple",
+    "date": "2026-11-18",
+    "checked": "2026-11-21",
+    "events": []
   }
 }

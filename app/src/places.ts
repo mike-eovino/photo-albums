@@ -18,6 +18,7 @@ export const OTHER_PLACE = 'other';
 export interface AlbumEvent {
   name: string;
   nameLocal: string;
+  venue?: string; // where it took place (added after the first Chennai lookups)
   description: string;
   startDate: string;
   endDate: string;

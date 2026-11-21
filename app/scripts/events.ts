@@ -10,10 +10,13 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import Anthropic from '@anthropic-ai/sdk';
-import { type AlbumEvent, type PlaceFile, nearestPlace, OTHER_PLACE, visitKey } from '../src/places.ts';
+import { type AlbumEvent, type PlaceFile, distanceM, nearestPlace, OTHER_PLACE, visitKey } from '../src/places.ts';
 
 const MODEL = 'claude-opus-5-5';
 const MAX_SEARCHES_PER_VISIT = 5;
+// An event's venue must be within the place's radius of the photos, but never
+// less than this. Phone GPS is accurate to about 5-20 m outdoors.
+const MIN_EVENT_RADIUS_M = 300;
 const KEYCHAIN_SERVICE = 'photo-albums-anthropic';
 // List prices used only to print an estimate (USD): Opus 5.5 input / output per
 // token, cache reads, and web search per search.
@@ -41,6 +44,10 @@ export interface Visit {
   firstTime: string;
   lastTime: string;
   offset: string;
+  lat: number; // average of the visit's photo locations
+  lon: number;
+  spreadM: number; // farthest photo from that average
+  coords: [number, number][];
 }
 
 /** One visit per place per local date, in time order. Photos in "Other" are skipped. */
@@ -51,12 +58,14 @@ export function findVisits(places: PlaceFile[], photos: PhotoLike[]): Visit[] {
     const placeId = nearestPlace(places, p);
     if (placeId === OTHER_PLACE) continue;
     const date = p.takenAt.slice(0, 10);
+    const coord: [number, number] = [p.lat!, p.lon!];
     const time = p.takenAt.slice(11, 16);
     const key = visitKey(placeId, date);
     const v = visits.get(key);
     if (v) {
       if (time < v.firstTime) v.firstTime = time;
       if (time > v.lastTime) v.lastTime = time;
+      v.coords.push(coord);
     } else {
       visits.set(key, {
         key,
@@ -65,8 +74,17 @@ export function findVisits(places: PlaceFile[], photos: PhotoLike[]): Visit[] {
         firstTime: time,
         lastTime: time,
         offset: p.takenAt.slice(19) || '',
+        lat: 0,
+        lon: 0,
+        spreadM: 0,
+        coords: [coord],
       });
     }
+  }
+  for (const v of visits.values()) {
+    v.lat = v.coords.reduce((s, c) => s + c[0], 0) / v.coords.length;
+    v.lon = v.coords.reduce((s, c) => s + c[1], 0) / v.coords.length;
+    v.spreadM = Math.round(Math.max(...v.coords.map((c) => distanceM(v.lat, v.lon, c[0], c[1]))));
   }
   return [...visits.values()];
 }
@@ -97,10 +115,14 @@ const RECORD_TOOL: Anthropic.Beta.BetaTool = {
         items: {
           type: 'object',
           additionalProperties: false,
-          required: ['name', 'nameLocal', 'description', 'startDate', 'endDate', 'sourceUrl', 'confidence'],
+          required: ['name', 'nameLocal', 'venue', 'description', 'startDate', 'endDate', 'sourceUrl', 'confidence'],
           properties: {
             name: { type: 'string', description: 'Short English name of the event.' },
             nameLocal: { type: 'string', description: 'Name in the local language and script, or "" if unknown.' },
+            venue: {
+              type: 'string',
+              description: 'Where the event took place, specific enough to check its distance from the photos (for example a street or building).',
+            },
             description: {
               type: 'string',
               description: 'One or two plain, factual sentences for a travel album: what it is and why it matters.',
@@ -119,11 +141,14 @@ const RECORD_TOOL: Anthropic.Beta.BetaTool = {
 
 const SYSTEM = `You research a personal travel photo album. Given a place and the local date and time when photos were taken there, find whether anything significant was happening at that place at that time.
 
-Count as significant: religious festivals, ceremonies, processions or special services at that place; public holidays observed locally; notable public events held at or right next to the place (concerts, exhibitions, conferences, sports); and weather or other news that affected the place that day.
+Count as significant: religious festivals, ceremonies, processions or special services at that place; public holidays observed there; public events at the place itself (concerts, exhibitions, sports); and weather or other news that affected the place that day.
 
 Rules:
 - The event must include the given date. A multi-day festival counts if the date falls inside it.
-- The event must be at the place itself or its immediate surroundings, not just somewhere in the same city.
+- Location is strict. The photo coordinates come from phone GPS and are accurate to within about 20 m. The event's venue must be within the stated distance of where the photos were taken. Something elsewhere in the same neighbourhood, district or city does not count, however famous or close it seems. If you cannot place the venue within that distance, leave the event out.
+- It must be something a person standing where the photos were taken, at that time, could have seen, heard or taken part in. Conferences, campus events, private functions and ticketed events at a different venue do not count.
+- Record the venue for each event so its location can be checked.
+- Report each occasion once. If the date is the main day of a longer festival, report that main day as one event and mention the wider festival in its description.
 - Search the web to confirm each event and its dates. Include only events you can support with a source; use "medium" confidence when the source is indirect.
 - Ordinary daily rituals, normal opening hours, and routine tourism are not events.
 - An empty list is a good answer when nothing notable was happening.
@@ -135,7 +160,9 @@ function userPrompt(v: Visit, localLanguage: string): string {
   return [
     `Place: ${pl.name}${pl.nameLocal ? ` (${pl.nameLocal})` : ''}`,
     pl.area ? `Area: ${pl.area}` : '',
-    `Coordinates: ${pl.lat}, ${pl.lon}`,
+    `Where the photos were taken: ${v.lat.toFixed(5)}, ${v.lon.toFixed(5)}` +
+      (v.spreadM > 30 ? ` (the photos are spread over about ${v.spreadM} m)` : ''),
+    `Events must be within ${Math.max(pl.radiusM, MIN_EVENT_RADIUS_M) + v.spreadM} m of that point.`,
     pl.description ? `About the place: ${pl.description}` : '',
     `Local date: ${v.date}`,
     `Local time of the photos: ${times}${v.offset ? ` (UTC${v.offset})` : ''}`,
