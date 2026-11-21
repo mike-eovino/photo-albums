@@ -1,0 +1,11 @@
+# Original photos: full resolution with GPS/EXIF. Kept local, never committed.
+# `npm run photos` writes EXIF-free copies to albums/<id>/generated/, which are committed.
+albums/*/originals/
+*.jpg
+*.JPG
+*.jpeg
+*.JPEG
+
+node_modules/
+app/dist/
+.DS_Store

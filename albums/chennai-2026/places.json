@@ -1,0 +1,90 @@
+[
+  {
+    "id": "airport-area",
+    "name": "Chennai International Airport",
+    "nameLocal": "சென்னை பன்னாட்டு வானூர்தி நிலையம்",
+    "area": "Tirusulam",
+    "lat": 12.9831, "lon": 80.1669, "radiusM": 400,
+    "description": "Chennai International Airport (MAA) sits on the city's southwest edge, between Meenambakkam and Tirusulam. It is one of India's busiest airports and the main gateway to Tamil Nadu. The terminals are decorated with traditional South Indian motifs, such as kolam-style floral patterns."
+  },
+  {
+    "id": "kapaleeshwarar",
+    "name": "Kapaleeshwarar Temple",
+    "nameLocal": "கபாலீசுவரர் கோயில்",
+    "area": "Mylapore",
+    "lat": 13.0333, "lon": 80.2703, "radiusM": 150,
+    "description": "Kapaleeshwarar Temple is a Dravidian-style temple to Shiva, worshipped here as Kapaleeshwarar, and his consort Parvati as Karpagambal. Its origins are celebrated in the hymns of the 7th-century Nayanar saints, and the present temple was rebuilt in the 16th century. The colorful east gopuram, about 37 m tall, was completed in 1906."
+  },
+  {
+    "id": "mylapore-tank",
+    "name": "Mylapore streets",
+    "nameLocal": "மயிலாப்பூர் தெருக்கள்",
+    "area": "Mylapore",
+    "lat": 13.0347, "lon": 80.2711, "radiusM": 200,
+    "description": "Mylapore is one of Chennai's oldest neighborhoods, and grew up around the Kapaleeshwarar Temple and its large stepped tank. Its narrow streets are full of flower sellers, silk shops and tiffin rooms. It is also a center of Carnatic music during the December music season."
+  },
+  {
+    "id": "omr-perungudi",
+    "name": "OMR IT corridor",
+    "nameLocal": "பழைய மாமல்லபுரம் சாலை",
+    "area": "Perungudi / Thoraipakkam",
+    "lat": 12.9121, "lon": 80.2255, "radiusM": 600,
+    "description": "Old Mahabalipuram Road (OMR), officially Rajiv Gandhi Salai, runs south from Chennai toward Mahabalipuram. Since the early 2000s it has become the city's IT corridor, lined with technology parks and office campuses."
+  },
+  {
+    "id": "omr-navalur",
+    "name": "Navalur",
+    "nameLocal": "நாவலூர்",
+    "area": "Navalur / Semmancheri",
+    "lat": 12.8750, "lon": 80.2273, "radiusM": 400,
+    "description": "Navalur is a fast-growing suburb on the southern stretch of OMR, home to apartment complexes, IT offices and restaurants. Meals here are often served the traditional Tamil way, on a banana leaf."
+  },
+  {
+    "id": "guindy",
+    "name": "Guindy",
+    "nameLocal": "கிண்டி",
+    "area": "Guindy",
+    "lat": 13.0121, "lon": 80.2225, "radiusM": 300,
+    "description": "Guindy is a commercial district in south-central Chennai with major hotels, offices and the Guindy industrial estate. It is next to Guindy National Park, one of the few national parks inside a city, and IIT Madras."
+  },
+  {
+    "id": "pancha-rathas",
+    "name": "Pancha Rathas",
+    "nameLocal": "பஞ்ச ரதங்கள்",
+    "area": "Mahabalipuram",
+    "lat": 12.6091, "lon": 80.1897, "radiusM": 1500,
+    "description": "The Pancha Rathas (Five Chariots) are monolithic temples, each carved from a single granite outcrop in the late 7th century under the Pallava king Narasimhavarman I (Mamalla). They are named after the five Pandava brothers and Draupadi from the Mahabharata, although the names came later. Life-size carvings of an elephant, a lion and the bull Nandi stand among them. They are part of the Group of Monuments at Mahabalipuram, a UNESCO World Heritage Site since 1984."
+  },
+  {
+    "id": "arjunas-penance",
+    "name": "Arjuna's Penance and Krishna's Butter Ball",
+    "nameLocal": "அர்ஜுனன் தபசு மற்றும் கிருஷ்ணனின் வெண்ணெய் உருண்டை",
+    "area": "Mahabalipuram",
+    "lat": 12.6185, "lon": 80.1929, "radiusM": 1500,
+    "description": "Arjuna's Penance is a huge open-air relief carved across two granite boulders in the 7th century. It shows gods, sages, animals and a herd of life-size elephants, and is read either as Arjuna's penance or as the descent of the Ganges. On the hill above sits Krishna's Butter Ball, a giant boulder balanced on a slope. Nearby are the Krishna Mandapam and the Trimurti Cave Temple."
+  },
+  {
+    "id": "shore-temple",
+    "name": "Shore Temple",
+    "nameLocal": "கடற்கரைக் கோயில்",
+    "area": "Mahabalipuram",
+    "lat": 12.6168, "lon": 80.1985, "radiusM": 600,
+    "description": "The Shore Temple was built around 700–728 under the Pallava king Narasimhavarman II (Rajasimha). It is one of the oldest structural stone temples in South India, with two shrines to Shiva and one to Vishnu. It stands right on the Bay of Bengal, protected from the waves by a breakwater."
+  },
+  {
+    "id": "mahabalipuram-beach",
+    "name": "Mahabalipuram beach",
+    "nameLocal": "மாமல்லபுரம் கடற்கரை",
+    "area": "Mahabalipuram",
+    "lat": 12.5989, "lon": 80.1898, "radiusM": 500,
+    "description": "The beach south of the Shore Temple is a quieter stretch of sand on the Bay of Bengal, popular with local families and fishermen."
+  },
+  {
+    "id": "santhome",
+    "name": "San Thome Basilica",
+    "nameLocal": "சாந்தோம் பேராலயம்",
+    "area": "Santhome",
+    "lat": 13.0337, "lon": 80.2778, "radiusM": 200,
+    "description": "San Thome Basilica is a Roman Catholic church built over the tomb traditionally held to be that of St. Thomas the Apostle. The Portuguese first built a church here in the 16th century, and the present white neo-Gothic building dates from 1893. It was named a minor basilica in 1956."
+  }
+]
