@@ -59,6 +59,9 @@ export interface Album extends AlbumFile {
 }
 
 const BASE = `${import.meta.env.BASE_URL}albums/`;
+/** The day of a photo with no capture date (no EXIF). The build lists these last. */
+export const UNKNOWN_DAY = 'unknown';
+export const isDated = (day: string) => day !== UNKNOWN_DAY;
 
 async function getJson<T>(url: string, fallback?: T): Promise<T> {
   // Always check with the server for a newer copy; an unchanged file costs a 304.
@@ -102,7 +105,7 @@ async function fetchAlbum(id: string): Promise<Album> {
     ...p,
     placeId: nearestPlace(placeFiles, p),
     caption: captions[p.id] ?? '',
-    day: p.takenAt?.slice(0, 10) ?? 'unknown',
+    day: p.takenAt?.slice(0, 10) ?? UNKNOWN_DAY,
     time: p.takenAt?.slice(11, 16) ?? '',
     thumbUrl: `${dir}generated/${p.thumb}${p.v ? `?v=${p.v}` : ''}`,
     displayUrl: `${dir}generated/${p.display}${p.v ? `?v=${p.v}` : ''}`,
@@ -186,7 +189,8 @@ export function dayLabel(day: string, withYear = false): string {
   return `${wd} ${d} ${MONTHS[mo - 1]}${withYear ? ` ${y}` : ''}`;
 }
 
-export function dateRange(days: string[]): string {
+export function dateRange(allDays: string[]): string {
+  const days = allDays.filter(isDated); // photos with no date don't widen the range
   if (days.length === 0) return '';
   const first = days[0];
   const last = days[days.length - 1];
@@ -206,7 +210,8 @@ export function timeRange(photos: Photo[]): string {
 
 export function photoAlt(album: Album, p: Photo): string {
   const place = album.placeById.get(p.placeId);
-  return p.caption || `${place?.name ?? 'Photo'}, ${dayLabel(p.day)} ${p.time}`;
+  if (p.caption) return p.caption;
+  return isDated(p.day) ? `${place?.name ?? 'Photo'}, ${dayLabel(p.day)} ${p.time}` : `${place?.name ?? 'Photo'}, date unknown`;
 }
 
 export const DAY_COLORS = ['#c0562b', '#2f74b5', '#2e8b57', '#8e4fbf', '#b8860b', '#c2417a'];

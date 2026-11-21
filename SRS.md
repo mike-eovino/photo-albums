@@ -52,7 +52,7 @@ Priority **Must** and **Should** are in v1. **Could** is deferred.
 | FR-2 | The app assigns each photo to the nearest place in the album's `places.json`, within that place's radius. Photos with no match go to an "Other" group. Because this happens in the browser, editing `places.json` needs no rebuild of the photos. | Must |
 | FR-3 | The build creates a thumbnail (400 px) and a display image (1600 px) in WebP for each photo, with orientation corrected. | Must |
 | FR-4 | The web copies contain no EXIF, GPS, XMP or other metadata. | Must |
-| FR-5 | **Gallery view:** a grid of thumbnails, grouped by day and then by place. Each group heading shows the place name in English and the local language, the time range and the photo count. | Must |
+| FR-5 | **Gallery view:** a grid of thumbnails, grouped by day and then by place. Each group heading shows the place name in English and the local language, the time range and the photo count. Photos with no capture date (no EXIF) are listed last, under "Unknown date", and don't affect the album's date range or day count. The viewer leaves out the "Taken" line for them. | Must |
 | FR-6 | **Photo viewer:** a full-screen lightbox with previous and next controls, keyboard arrows and Esc, and swipe on touch devices. | Must |
 | FR-7 | **Photo info panel:** the viewer shows the caption, the place name in English and the local language, the place description, the date and time, coordinates with links to Google Maps and OpenStreetMap, altitude, camera, file name, and a small locator map. | Must |
 | FR-8 | **Map view:** an interactive map with one marker per place, sized by photo count. Clicking a marker shows its thumbnails, and clicking a thumbnail opens the viewer. | Must |
@@ -134,7 +134,7 @@ For each album, it works through these steps in order:
    A photo's id is its file name without `.MP` and `.jpg`. A file name with `.MP` marks a Motion Photo.
 3. **Write web images (FR-3, FR-4).** It writes two WebP copies at quality 80: `thumbs/` (400 px) and `display/` (1600 px). The size is the longest side, and photos are never enlarged. Copies are rotated upright and contain no EXIF, GPS or XMP. A photo is skipped when its SHA-256 and the image settings match `build-manifest.json` and both copies exist (see *Change detection*).
 4. **Remove stale images (FR-17).** It deletes any `.webp` in `thumbs/` or `display/` that has no matching original.
-5. **Write `generated/photos.json` and `generated/build-manifest.json`.** Photos are listed in capture-time order. Each photo's `v` is a short hash of its original's SHA-256 and the image settings, so it changes exactly when the WebP copies are rebuilt from different input (NFR-10). Both files are rewritten from scratch on every run.
+5. **Write `generated/photos.json` and `generated/build-manifest.json`.** Photos are listed in capture-time order, with photos that have no capture date last. Each photo's `v` is a short hash of its original's SHA-256 and the image settings, so it changes exactly when the WebP copies are rebuilt from different input (NFR-10). Both files are rewritten from scratch on every run.
 6. **Tidy the album files (FR-22).** It removes places with no photos from `places.json`, using the same nearest-place rule as the app (FR-2). It removes captions of photos that no longer exist from `captions.json`. It skips the place check if no photo has GPS data, because every place would then look empty.
 7. **Look up significant events (FR-23).** It groups photos into visits: each place on each local date, skipping photos in "Other". For each visit with no entry in `events.json`, it sends Claude the place's name, area, coordinates and description, the local date and time of the photos, and the album's local language. Claude searches the web (at most 5 searches) and reports any events through a strict JSON tool, so the result is always well-formed. If a safety check declines a request, the API retries it on a suitable model (`fallbacks: "default"`). It removes entries for visits that no longer exist. The API key is read from the macOS Keychain (service `photo-albums-anthropic`). With no key, or if a lookup fails, it skips that visit with a note and tries again on the next run.
 8. **Report.** It prints a summary line, then a line for each of these that applies:
@@ -142,6 +142,7 @@ For each album, it works through these steps in order:
    - places and captions it removed
    - a `coverPhotoId` that no longer exists
    - photos with no caption yet
+   - photos with no capture date
    - photos with no GPS data
    - each event lookup, with the events found, and the number of searches and estimated cost
 

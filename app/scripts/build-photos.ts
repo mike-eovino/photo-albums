@@ -380,7 +380,13 @@ async function buildAlbum(album: string) {
 
   const photos = results.map((r) => r.record);
 
-  photos.sort((a, b) => (a.takenAt ?? '').localeCompare(b.takenAt ?? '') || a.id.localeCompare(b.id));
+  // Capture-time order; photos with no date (no EXIF) go last.
+  photos.sort(
+    (a, b) =>
+      Number(a.takenAt == null) - Number(b.takenAt == null) ||
+      (a.takenAt ?? '').localeCompare(b.takenAt ?? '') ||
+      a.id.localeCompare(b.id),
+  );
 
   const keep = new Set(photos.map((p) => `${p.id}.webp`));
   let stale = 0;
@@ -406,6 +412,8 @@ async function buildAlbum(album: string) {
   );
   notes.push(...(await tidyAlbumFiles(albumDir, photos)));
   notes.push(...(await buildEvents(albumDir, photos)));
+  const undated = photos.filter((p) => p.takenAt == null).map((p) => p.id);
+  if (undated.length) notes.push(`no capture date, so listed last under "Unknown date": ${undated.join(', ')}`);
   const missing = photos.filter((p) => p.lat == null).map((p) => p.id);
   if (missing.length) notes.push(`no GPS, so not on the map: ${missing.join(', ')}`);
   for (const n of notes) console.log(`  ${n}`);

@@ -7,6 +7,7 @@ import {
   dayLabel,
   esc,
   eventListHtml,
+  isDated,
   eventsFor,
   loadAlbum,
   loadAlbumIds,
@@ -140,7 +141,7 @@ function renderAlbum(album: Album, r: Route) {
         <ul class="stats">
           <li><strong>${album.photos.length}</strong> photos</li>
           <li><strong>${album.places.length}</strong> places</li>
-          <li><strong>${album.days.length}</strong> days</li>
+          <li><strong>${album.days.filter(isDated).length}</strong> days</li>
           <li><strong>${album.travelKm}</strong> km between stops</li>
           <li>${esc(dateRange(album.days))}</li>
         </ul>

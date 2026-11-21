@@ -1,5 +1,5 @@
 // Full-screen photo viewer with info panel and slideshow (FR-6, FR-7, FR-15, FR-18).
-import { type Album, type Photo, dayLabel, esc, eventListHtml, eventsFor, photoAlt } from './data.ts';
+import { type Album, type Photo, dayLabel, esc, eventListHtml, eventsFor, isDated, photoAlt } from './data.ts';
 import { MiniMap } from './map.ts';
 
 const SLIDE_MS = 4000;
@@ -158,7 +158,7 @@ export class Viewer {
           : ''
       }
       <dl class="facts">
-        <dt>Taken</dt><dd>${esc(dayLabel(p.day, true))}, ${esc(p.time)} ${esc(album.timeZoneLabel ?? '')}</dd>
+        ${isDated(p.day) ? `<dt>Taken</dt><dd>${esc(dayLabel(p.day, true))}, ${esc(p.time)} ${esc(album.timeZoneLabel ?? '')}</dd>` : ''}
         ${
           coords
             ? `<dt>Location</dt><dd>${esc(coords)}<br>

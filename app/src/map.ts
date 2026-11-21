@@ -1,6 +1,6 @@
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { type Album, type Place, dayColor, dayLabel, esc, timeRange } from './data.ts';
+import { type Album, type Place, dayColor, dayLabel, esc, timeRange, isDated } from './data.ts';
 
 const TILES = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 const ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
@@ -64,7 +64,9 @@ export function renderMap(
   const legend = new L.Control({ position: 'bottomleft' });
   legend.onAdd = () => {
     const div = L.DomUtil.create('div', 'map-legend');
+    // Only days that appear on the map (photos with no location or date are left out).
     div.innerHTML = album.days
+      .filter((d) => isDated(d) && located.some((p) => p.day === d))
       .map((d) => `<div><span class="swatch" style="background:${dayColor(album, d)}"></span>${esc(dayLabel(d))}</div>`)
       .join('');
     return div;
