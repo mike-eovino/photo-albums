@@ -17,6 +17,16 @@ Run commands from the repository root or from `app/` (Node 22.18 or newer).
 Captions, place names and descriptions live in `albums/<id>/captions.json`, `places.json`
 and `album.json`. Edit them and push; no photo rebuild is needed.
 
+`npm run photos` also looks up significant events for each new visit (a place on a date) with
+Claude and web search, and saves them to `albums/<id>/events.json`, which you can edit. It reads
+the Anthropic API key from the macOS Keychain. To store or replace it, run this in Terminal and
+paste the key at the prompt:
+
+    security add-generic-password -U -a "$USER" -s photo-albums-anthropic -w
+
+Without a key, the build skips the lookup. Each new visit costs about 25–30¢. To look a visit up
+again, delete its entry from `events.json`.
+
 ## Adding an album
 
 1. Create `albums/<id>/originals/` and copy the photos in. They are never committed.

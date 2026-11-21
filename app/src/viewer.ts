@@ -1,5 +1,5 @@
 // Full-screen photo viewer with info panel and slideshow (FR-6, FR-7, FR-15, FR-18).
-import { type Album, type Photo, dayLabel, esc, photoAlt } from './data.ts';
+import { type Album, type Photo, dayLabel, esc, eventListHtml, eventsFor, photoAlt } from './data.ts';
 import { MiniMap } from './map.ts';
 
 const SLIDE_MS = 4000;
@@ -153,7 +153,8 @@ export class Viewer {
           ? `<h2 class="place-name">${esc(place.name)}</h2>
              ${place.nameLocal ? `<div class="local" lang="${esc(lang)}">${esc(place.nameLocal)}</div>` : ''}
              ${place.area && place.area !== place.name ? `<div class="muted">${esc(place.area)}</div>` : ''}
-             ${place.description ? `<p class="description">${esc(place.description)}</p>` : ''}`
+             ${place.description ? `<p class="description">${esc(place.description)}</p>` : ''}
+             ${eventListHtml(album, eventsFor(album, place.id, p.day), 'Happening here')}`
           : ''
       }
       <dl class="facts">

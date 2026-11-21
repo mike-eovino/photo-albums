@@ -2,9 +2,9 @@
 // Place assignment (FR-2) happens here, so editing places.json takes effect
 // on reload without re-running the photo build.
 
-import { type PlaceFile, OTHER_PLACE, distanceM, nearestPlace } from './places.ts';
+import { type AlbumEvent, type PlaceFile, OTHER_PLACE, distanceM, nearestPlace, visitKey } from './places.ts';
 
-export { type PlaceFile, OTHER_PLACE, distanceM };
+export { type AlbumEvent, type PlaceFile, OTHER_PLACE, distanceM };
 
 export interface PhotoFile {
   id: string;
@@ -55,6 +55,7 @@ export interface Album extends AlbumFile {
   days: string[];
   cover: Photo | undefined;
   travelKm: number;
+  events: Map<string, AlbumEvent[]>; // visitKey(place, day) -> events (FR-23)
 }
 
 const BASE = `${import.meta.env.BASE_URL}albums/`;
@@ -87,12 +88,15 @@ export function loadAlbum(id: string): Promise<Album> {
 
 async function fetchAlbum(id: string): Promise<Album> {
   const dir = `${BASE}${id}/`;
-  const [meta, placeFiles, captions, generated] = await Promise.all([
+  const [meta, placeFiles, captions, generated, eventsFile] = await Promise.all([
     getJson<AlbumFile>(`${dir}album.json`),
     getJson<PlaceFile[]>(`${dir}places.json`, []),
     getJson<Record<string, string>>(`${dir}captions.json`, {}),
     getJson<{ photos: PhotoFile[] }>(`${dir}generated/photos.json`),
+    getJson<Record<string, { events?: AlbumEvent[] }>>(`${dir}events.json`, {}),
   ]);
+  const events = new Map<string, AlbumEvent[]>();
+  for (const [key, v] of Object.entries(eventsFile)) if (v.events?.length) events.set(key, v.events);
 
   const photos: Photo[] = generated.photos.map((p, index) => ({
     ...p,
@@ -141,10 +145,35 @@ async function fetchAlbum(id: string): Promise<Album> {
     days: [...new Set(photos.map((p) => p.day))],
     cover: (meta.coverPhotoId && byId.get(meta.coverPhotoId)) || photos[0],
     travelKm: Math.round(travelM / 1000),
+    events,
   };
 }
 
+/** Events at a place on a given day (FR-23). */
+export function eventsFor(album: Album, placeId: string, day: string): AlbumEvent[] {
+  return album.events.get(visitKey(placeId, day)) ?? [];
+}
+
 // ---- formatting ----
+
+/** A list of events for the info panel and place cards (FR-23). */
+export function eventListHtml(album: Album, events: AlbumEvent[], heading: string): string {
+  if (events.length === 0) return '';
+  const lang = album.localLanguage?.code ?? '';
+  return `<section class="events">
+    <h3 class="events-heading"><span aria-hidden="true">★</span> ${esc(heading)}</h3>
+    ${events
+      .map(
+        (e) => `<div class="event">
+          <div class="event-name">${e.sourceUrl ? `<a href="${esc(e.sourceUrl)}" target="_blank" rel="noopener">${esc(e.name)}</a>` : esc(e.name)}</div>
+          ${e.nameLocal ? `<div class="local" lang="${esc(lang)}">${esc(e.nameLocal)}</div>` : ''}
+          <div class="event-dates">${esc(e.startDate === e.endDate ? dayLabel(e.startDate, true) : `${dayLabel(e.startDate)} – ${dayLabel(e.endDate, true)}`)}</div>
+          ${e.description ? `<p class="event-description">${esc(e.description)}</p>` : ''}
+        </div>`,
+      )
+      .join('')}
+  </section>`;
+}
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];

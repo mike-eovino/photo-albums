@@ -6,6 +6,8 @@ import {
   dayColor,
   dayLabel,
   esc,
+  eventListHtml,
+  eventsFor,
   loadAlbum,
   loadAlbumIds,
   photoAlt,
@@ -209,6 +211,12 @@ function renderGallery(view: HTMLElement, album: Album, r: Route) {
             <a href="${href(album.id, 'places')}#place-${esc(pl.id)}">${esc(pl.name)}</a>
             ${pl.nameLocal ? `<span class="local" lang="${esc(lang)}">${esc(pl.nameLocal)}</span>` : ''}
             <span class="muted">${esc(timeRange(g))} · ${g.length} photo${g.length === 1 ? '' : 's'}</span>
+            ${eventsFor(album, pl.id, g[0].day)
+              .map(
+                (e) =>
+                  `<a class="event-chip" href="${href(album.id, 'places')}#place-${esc(pl.id)}" title="${esc(e.description)}"><span aria-hidden="true">★</span> ${esc(e.name)}</a>`,
+              )
+              .join('')}
           </h3>
           <div class="grid">
             ${g
@@ -264,6 +272,11 @@ function renderPlaces(view: HTMLElement, album: Album) {
             ${pl.nameLocal ? `<div class="local" lang="${esc(lang)}">${esc(pl.nameLocal)}</div>` : ''}
             <div class="muted">${pl.area && pl.area !== pl.name ? `${esc(pl.area)} · ` : ''}${esc(dayLabel(pl.photos[0].day))}, ${esc(timeRange(pl.photos))} · ${pl.photos.length} photo${pl.photos.length === 1 ? '' : 's'}</div>
             ${pl.description ? `<p>${esc(pl.description)}</p>` : ''}
+            ${eventListHtml(
+              album,
+              [...new Set(pl.photos.map((p) => p.day))].flatMap((d) => eventsFor(album, pl.id, d)),
+              'During your visit',
+            )}
             <div class="actions">
               <a class="button" href="${href(album.id, '', { place: pl.id })}">View photos</a>
               <a class="button" href="${href(album.id, 'map', { place: pl.id })}">Show on map</a>

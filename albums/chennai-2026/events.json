@@ -1,0 +1,18 @@
+{
+  "kapaleeshwarar@2026-11-15": {
+    "place": "Kapaleeshwarar Temple",
+    "date": "2026-11-15",
+    "checked": "2026-11-21",
+    "events": [
+      {
+        "name": "Soorasamharam – Skanda Sashti festival",
+        "nameLocal": "சூரசம்ஹாரம் – கந்த சஷ்டி விழா",
+        "description": "The highlight of the temple's yearly Skanda Sashti festival (Nov 9–17, 2026): the evening re-enactment of Lord Murugan (Sri Singaravelar) defeating the demon Soorapadman. It was staged on North Mada Street next to the temple from about 7 pm, and at least 5,000 people came to watch.",
+        "startDate": "2026-11-15",
+        "endDate": "2026-11-15",
+        "sourceUrl": "https://www.mylaporetimes.com/2026/11/skanda-sashti-festival-at-sri-kapaleeswarar-temple-begins/",
+        "confidence": "high"
+      }
+    ]
+  }
+}

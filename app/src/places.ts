@@ -14,6 +14,20 @@ export interface PlaceFile {
 
 export const OTHER_PLACE = 'other';
 
+/** A significant event at a place during a visit (FR-23), as stored in events.json. */
+export interface AlbumEvent {
+  name: string;
+  nameLocal: string;
+  description: string;
+  startDate: string;
+  endDate: string;
+  sourceUrl: string;
+  confidence: 'high' | 'medium';
+}
+
+/** events.json key for a visit: a place on a local date. */
+export const visitKey = (placeId: string, date: string) => `${placeId}@${date}`;
+
 export function distanceM(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371000;
   const rad = Math.PI / 180;

@@ -12,6 +12,9 @@
 // Tidying (FR-22): after building, places with no photos are removed from
 // places.json and captions of photos that no longer exist from captions.json.
 //
+// Events (FR-1, FR-23): each new visit (a place on a local date) is looked up with
+// Claude and web search, and saved to events.json. See events.ts.
+//
 // Change detection: generated/build-manifest.json records a SHA-256 of each
 // original and the image settings used. A photo's WebP copies are rebuilt when
 // its original's contents change, when the settings change, or when a copy is
@@ -32,6 +35,7 @@ import exifr from 'exifr';
 import sharp from 'sharp';
 import { exiftoolPath } from 'exiftool-vendored';
 import { type PlaceFile, nearestPlace } from '../src/places.ts';
+import { type EventsFile, findVisits, updateEvents } from './events.ts';
 
 const ALBUMS_DIR = path.resolve(import.meta.dirname, '..', '..', 'albums');
 const SIZES = { thumbs: 400, display: 1600 } as const;
@@ -322,6 +326,19 @@ async function tidyAlbumFiles(albumDir: string, photos: PhotoRecord[]): Promise<
   return notes;
 }
 
+/** Looks up significant events for new visits (FR-23). Returns notes for the log. */
+async function buildEvents(albumDir: string, photos: PhotoRecord[]): Promise<string[]> {
+  const places = await readJson<PlaceFile[]>(path.join(albumDir, 'places.json'));
+  if (!places?.length) return [];
+  const album = await readJson<{ localLanguage?: { name: string } }>(path.join(albumDir, 'album.json'));
+  const eventsPath = path.join(albumDir, 'events.json');
+  const existing = (await readJson<EventsFile>(eventsPath)) ?? {};
+  const visits = findVisits(places, photos);
+  const { file, notes, changed } = await updateEvents(existing, visits, album?.localLanguage?.name ?? 'English');
+  if (changed) await writeFile(eventsPath, JSON.stringify(file, null, 2) + '\n');
+  return notes;
+}
+
 async function buildAlbum(album: string) {
   const started = Date.now();
   const albumDir = path.join(ALBUMS_DIR, album);
@@ -375,6 +392,7 @@ async function buildAlbum(album: string) {
       (stale ? `; deleted ${stale} stale image files` : ''),
   );
   notes.push(...(await tidyAlbumFiles(albumDir, photos)));
+  notes.push(...(await buildEvents(albumDir, photos)));
   const missing = photos.filter((p) => p.lat == null).map((p) => p.id);
   if (missing.length) notes.push(`no GPS, so not on the map: ${missing.join(', ')}`);
   for (const n of notes) console.log(`  ${n}`);

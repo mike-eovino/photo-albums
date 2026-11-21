@@ -48,7 +48,7 @@ Priority **Must** and **Should** are in v1. **Could** is deferred.
 
 | ID | Requirement | Priority |
 | --- | --- | --- |
-| FR-1 | The build reads EXIF from every JPEG in an album's `originals/`: capture time and UTC offset, GPS latitude, longitude and altitude, camera model, orientation and dimensions. | Must |
+| FR-1 | The build reads EXIF from every JPEG in an album's `originals/`: capture time and UTC offset, GPS latitude, longitude and altitude, camera model, orientation and dimensions.  The build also uses the date to determine if a significant event was happening at that place at that time (FR-23). | Must |
 | FR-2 | The app assigns each photo to the nearest place in the album's `places.json`, within that place's radius. Photos with no match go to an "Other" group. Because this happens in the browser, editing `places.json` needs no rebuild of the photos. | Must |
 | FR-3 | The build creates a thumbnail (400 px) and a display image (1600 px) in WebP for each photo, with orientation corrected. | Must |
 | FR-4 | The web copies contain no EXIF, GPS, XMP or other metadata. | Must |
@@ -70,6 +70,7 @@ Priority **Must** and **Should** are in v1. **Could** is deferred.
 | FR-20 | **Adding an album:** create `albums/<id>/` with `album.json`, `places.json`, `captions.json` and an `originals/` folder, then run `npm run photos`. No code changes are needed. | Must |
 | FR-21 | **Edited copies:** Google Photos saves an edited photo as a new file, such as `X~2.jpg`, with no EXIF. When the build finds one next to its original (`X.jpg` or `X.MP.jpg`), it copies the original's EXIF (date, time zone, GPS, camera) into the copy, deletes the original, and renames the copy to `X.jpg`. The photo keeps its id, caption and links. An edited Motion Photo becomes a still photo. If a photo has more than one edited copy, the build stops without changing anything and asks the owner to keep one. | Must |
 | FR-22 | **Tidying:** after each build, places with no photos are removed from `places.json`, and captions of photos that no longer exist are removed from `captions.json`. Remaining entries keep their formatting. The build warns if `coverPhotoId` no longer exists. | Must |
+| FR-23 | **Significant events:** for each *visit* (a place on one local date), the build asks Claude (Opus 5.5, through the Anthropic API, with web search, at most 5 searches per visit) whether anything significant was happening there at that time: festivals, ceremonies, public holidays, notable public events at the place, or weather and news affecting it. Each event has an English name, a local-language name, a one- or two-sentence description, start and end dates, a source link and a confidence. Results go into `events.json`, which the owner can edit. A visit that already has an entry is never looked up again, and entries for visits that no longer exist are removed. The app shows events in the viewer's info panel ("Happening here"), on the place's card ("During your visit"), and as a ★ marker on the gallery group heading. | Must |
 
 ## 5. Non-functional requirements
 
@@ -83,7 +84,7 @@ Priority **Must** and **Should** are in v1. **Could** is deferred.
 | NFR-6 | Theming | Light and dark themes follow the system setting. |
 | NFR-7 | Maintainability | TypeScript throughout. Album content is plain JSON that can be edited without touching code. |
 | NFR-8 | Integrity | Original photos are never uploaded. The build changes `originals/` only to merge an edited copy into its original (FR-21), which deletes the original. It deletes the original only after confirming the copy carries its location. The owner keeps full copies in Google Photos. |
-| NFR-9 | Privacy | `albums/*/originals/` is excluded from git. Only the EXIF-free WebP copies and JSON are committed and published. |
+| NFR-9 | Privacy | `albums/*/originals/` is excluded from git. Only the EXIF-free WebP copies and JSON are committed and published. The event lookup (FR-23) sends the Anthropic API only what the site already publishes about a place: its name, area, coordinates, description and the visit's date and time. No photos are sent. |
 | NFR-10 | Freshness | GitHub Pages lets browsers cache files for 10 minutes. Changes must still show up as soon as a deploy finishes. Each image URL ends in `?v=<version>`, which changes whenever the photo's WebP copies are rebuilt from different input, so an edited photo gets a new URL even though its file name stays the same. The app fetches the JSON files with `cache: 'no-cache'`, so it always checks for newer data. An unchanged file costs only a quick "not modified" reply. |
 
 ## 6. Data and architecture
@@ -103,7 +104,7 @@ flowchart LR
 
 The photo build runs on the owner's machine, because only it has the originals. GitHub Actions builds the app from the committed `generated/` and JSON files.
 
-**Tech stack:** `exifr` (reading EXIF), `exiftool-vendored` (copying EXIF into edited copies), `sharp` (resizing and WebP), Vite 6 + TypeScript with no framework, Leaflet 1.9 + OpenStreetMap tiles, plain CSS with custom properties, Node 22.18 or newer.
+**Tech stack:** `exifr` (reading EXIF), `exiftool-vendored` (copying EXIF into edited copies), `@anthropic-ai/sdk` (event lookup), `sharp` (resizing and WebP), Vite 6 + TypeScript with no framework, Leaflet 1.9 + OpenStreetMap tiles, plain CSS with custom properties, Node 22.18 or newer.
 
 **Album files**
 
@@ -112,6 +113,7 @@ The photo build runs on the owner's machine, because only it has the originals. 
 | `album.json` | `title`, `titleLocal`, `summary`, `localLanguage` (`code`, `name`), `timeZoneLabel`, `coverPhotoId`, `sortOrder` | Owner |
 | `places.json` | per place: `id`, `name`, `nameLocal`, `area`, `lat`, `lon`, `radiusM`, `description` | Owner. The build removes places with no photos (FR-22). |
 | `captions.json` | photo id → caption | Owner. The build removes captions of deleted photos (FR-22). |
+| `events.json` | visit key (`<placeId>@<YYYY-MM-DD>`) → `place`, `date`, `checked`, and a list of `events` (`name`, `nameLocal`, `description`, `startDate`, `endDate`, `sourceUrl`, `confidence`) | Build drafts new visits (FR-23); owner edits |
 | `generated/photos.json` | per photo: `id`, `file`, `takenAt`, `lat`, `lon`, `alt`, `width`, `height`, `camera`, `motion`, `thumb`, `display`, `v` (image version for cache busting, NFR-10) | Build only |
 | `generated/build-manifest.json` | the image settings used, and per photo: `file` and a SHA-256 of the original. Committed but not published. | Build only |
 
@@ -134,12 +136,14 @@ For each album, it works through these steps in order:
 4. **Remove stale images (FR-17).** It deletes any `.webp` in `thumbs/` or `display/` that has no matching original.
 5. **Write `generated/photos.json` and `generated/build-manifest.json`.** Photos are listed in capture-time order. Each photo's `v` is a short hash of its original's SHA-256 and the image settings, so it changes exactly when the WebP copies are rebuilt from different input (NFR-10). Both files are rewritten from scratch on every run.
 6. **Tidy the album files (FR-22).** It removes places with no photos from `places.json`, using the same nearest-place rule as the app (FR-2). It removes captions of photos that no longer exist from `captions.json`. It skips the place check if no photo has GPS data, because every place would then look empty.
-7. **Report.** It prints a summary line, then a line for each of these that applies:
+7. **Look up significant events (FR-23).** It groups photos into visits: each place on each local date, skipping photos in "Other". For each visit with no entry in `events.json`, it sends Claude the place's name, area, coordinates and description, the local date and time of the photos, and the album's local language. Claude searches the web (at most 5 searches) and reports any events through a strict JSON tool, so the result is always well-formed. If a safety check declines a request, the API retries it on a suitable model (`fallbacks: "default"`). It removes entries for visits that no longer exist. The API key is read from the macOS Keychain (service `photo-albums-anthropic`). With no key, or if a lookup fails, it skips that visit with a note and tries again on the next run.
+8. **Report.** It prints a summary line, then a line for each of these that applies:
    - each edited copy it merged
    - places and captions it removed
    - a `coverPhotoId` that no longer exists
    - photos with no caption yet
    - photos with no GPS data
+   - each event lookup, with the events found, and the number of searches and estimated cost
 
    For example:
 
@@ -147,6 +151,8 @@ For each album, it works through these steps in order:
    chennai-2026: 0 added, 1 updated, 0 removed, 68 unchanged (69 photos, 1.1 s)
      merged PXL_20261115_131355309~2.jpg into PXL_20261115_131355309.jpg: copied the date, location and camera from PXL_20261115_131355309.jpg, then deleted PXL_20261115_131355309.jpg
    ```
+
+Event lookups are billed to the owner's prepaid Anthropic API credits: about 25–30¢ per new visit. The key is limited to a `photo-albums` workspace with its own monthly spending limit, and auto-reload is off, so spending can't exceed the credit bought.
 
 The build stops with an error, and exits with status 1, when an album's `originals/` has no JPEGs, when a photo has more than one edited copy, or when copying metadata into an edited copy fails. In the last case the original is kept. Setting `DEBUG=1` prints the full stack trace.
 
@@ -166,6 +172,7 @@ The build does not commit, push or deploy. The owner reviews the changes, then c
 | **EXIF edited** | Yes | EXIF is re-read from every original on every run, so `photos.json` is always current even when the images are skipped. |
 | **Edited copy added** (`X~2.jpg`) | Yes | It is merged into its original first (FR-21), then counted as an update to `X`. |
 | **Place left with no photos** | Yes | The place is removed from `places.json`, and the captions of deleted photos are removed from `captions.json` (FR-22). |
+| **New visit** (a place on a new date) | Yes | It has no entry in `events.json`, so its events are looked up (FR-23). Existing entries are never looked up again; delete an entry to look it up again. |
 
 Hashing the originals takes well under a second per album, so an unchanged re-run is fast (NFR-2). Two originals that differ only by `.MP` (for example `X.jpg` and `X.MP.jpg`) would share a photo id. This does not happen with Pixel file names, so it is not handled.
 
@@ -183,6 +190,7 @@ photo-albums/
       generated/                 committed
   app/
     scripts/build-photos.ts      npm run photos [album-id]
+    scripts/events.ts            event lookup with Claude and web search (FR-23)
     src/                         main.ts, data.ts, places.ts, viewer.ts, map.ts, styles.css
     vite.config.ts               serves and copies albums/*, never originals/ or build-manifest.json
 ```
@@ -202,4 +210,5 @@ Answers from the owner, 20 Nov 2026.
 | Removed photos (20–21 Nov) | The second airport photo, the five OMR photos and two photos at Arjuna's Penance. The OMR place is removed. |
 | Edited copies from Google Photos | The build merges each one into its original and deletes the original (FR-21). The owner keeps full copies in Google Photos. |
 | Places with no photos | Removed from `places.json` automatically (FR-22). |
+| Finding significant events | Done by the build, not the app, using Claude through the Anthropic API with web search (FR-23). Billed to prepaid credits with auto-reload off, in a `photo-albums` workspace with a monthly spending limit. The key is kept in the macOS Keychain, never in the repository or the shell environment. |
 | Trip title | "Chennai, November 2026". |

@@ -5,7 +5,7 @@ import path from 'node:path';
 const ALBUMS_DIR = path.resolve(import.meta.dirname, '..', 'albums');
 
 // Album files the site may serve. originals/ is deliberately absent.
-const PUBLIC_FILES = ['album.json', 'places.json', 'captions.json'];
+const PUBLIC_FILES = ['album.json', 'places.json', 'captions.json', 'events.json'];
 const PUBLIC_DIR = 'generated';
 // Build-only files inside generated/ that the site doesn't need.
 const PRIVATE_GENERATED = ['build-manifest.json'];
