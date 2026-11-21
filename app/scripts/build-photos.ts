@@ -332,7 +332,20 @@ async function buildEvents(albumDir: string, photos: PhotoRecord[]): Promise<str
   if (!places?.length) return [];
   const album = await readJson<{ localLanguage?: { name: string } }>(path.join(albumDir, 'album.json'));
   const eventsPath = path.join(albumDir, 'events.json');
-  const existing = (await readJson<EventsFile>(eventsPath)) ?? {};
+  // A hand-edited events.json with a typo must stop the build: treating it as empty
+  // would look up (and pay for) every visit again and overwrite the owner's edits.
+  const eventsText = await readFile(eventsPath, 'utf8').catch(() => null);
+  let existing: EventsFile = {};
+  if (eventsText !== null) {
+    try {
+      existing = JSON.parse(eventsText) as EventsFile;
+    } catch (err) {
+      throw new Error(
+        `${eventsPath} is not valid JSON (${(err as Error).message}). Fix it and run again. ` +
+          'Photos and photos.json were updated; no events were looked up.',
+      );
+    }
+  }
   const visits = findVisits(places, photos);
   const { file, notes, changed } = await updateEvents(existing, visits, album?.localLanguage?.name ?? 'English');
   if (changed) await writeFile(eventsPath, JSON.stringify(file, null, 2) + '\n');
