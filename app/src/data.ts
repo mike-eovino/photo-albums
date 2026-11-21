@@ -2,6 +2,10 @@
 // Place assignment (FR-2) happens here, so editing places.json takes effect
 // on reload without re-running the photo build.
 
+import { type PlaceFile, OTHER_PLACE, distanceM, nearestPlace } from './places.ts';
+
+export { type PlaceFile, OTHER_PLACE, distanceM };
+
 export interface PhotoFile {
   id: string;
   file: string;
@@ -25,17 +29,6 @@ export interface Photo extends PhotoFile {
   thumbUrl: string;
   displayUrl: string;
   index: number; // position in the album, in time order
-}
-
-export interface PlaceFile {
-  id: string;
-  name: string;
-  nameLocal?: string;
-  area?: string;
-  lat: number;
-  lon: number;
-  radiusM: number;
-  description?: string;
 }
 
 export interface Place extends PlaceFile {
@@ -64,7 +57,6 @@ export interface Album extends AlbumFile {
 }
 
 const BASE = `${import.meta.env.BASE_URL}albums/`;
-export const OTHER_PLACE = 'other';
 
 async function getJson<T>(url: string, fallback?: T): Promise<T> {
   const res = await fetch(url);
@@ -73,25 +65,6 @@ async function getJson<T>(url: string, fallback?: T): Promise<T> {
     throw new Error(`Could not load ${url} (${res.status})`);
   }
   return res.json() as Promise<T>;
-}
-
-export function distanceM(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371000;
-  const rad = Math.PI / 180;
-  const dLat = (lat2 - lat1) * rad;
-  const dLon = (lon2 - lon1) * rad;
-  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(dLon / 2) ** 2;
-  return 2 * R * Math.asin(Math.sqrt(a));
-}
-
-function nearestPlace(places: PlaceFile[], p: PhotoFile): string {
-  if (p.lat == null || p.lon == null) return OTHER_PLACE;
-  let best: { id: string; d: number } | null = null;
-  for (const place of places) {
-    const d = distanceM(p.lat, p.lon, place.lat, place.lon);
-    if (d <= place.radiusM && (!best || d < best.d)) best = { id: place.id, d };
-  }
-  return best?.id ?? OTHER_PLACE;
 }
 
 export async function loadAlbumIds(): Promise<string[]> {

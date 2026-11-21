@@ -1,0 +1,12 @@
+{
+  "name": "photo-albums",
+  "private": true,
+  "description": "Shortcuts so npm commands work from the repository root. The app and its dependencies live in app/.",
+  "scripts": {
+    "photos": "npm --prefix app run photos --",
+    "dev": "npm --prefix app run dev",
+    "build": "npm --prefix app run build",
+    "preview": "npm --prefix app run preview",
+    "typecheck": "npm --prefix app run typecheck"
+  }
+}

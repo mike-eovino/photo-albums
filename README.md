@@ -5,7 +5,7 @@ https://mike-eovino.github.io/photo-albums/. See [SRS.md](SRS.md) for the full s
 
 ## Everyday tasks
 
-All commands run from `app/` (Node 22.18 or newer).
+Run commands from the repository root or from `app/` (Node 22.18 or newer).
 
 | Task | Command |
 | --- | --- |
@@ -23,4 +23,10 @@ and `album.json`. Edit them and push; no photo rebuild is needed.
 2. Add `album.json`, `places.json` and `captions.json` (copy the Chennai ones as a template).
 3. Run `npm run photos -- <id>`, check it with `npm run dev`, then commit and push.
 
-To keep a photo private, delete it from `originals/` and run `npm run photos` again.
+To keep a photo private, delete it from `originals/` and run `npm run photos` again. Places
+left with no photos, and captions of deleted photos, are removed from the JSON files.
+
+To use an edited photo, save the edit in Google Photos and put the copy (for example
+`PXL_…~2.jpg`) in `originals/` next to the original. `npm run photos` copies the original's
+date, location and camera into the edited copy, deletes the original, and renames the copy
+to the original's name, so its caption and links keep working.

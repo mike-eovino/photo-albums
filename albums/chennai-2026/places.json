@@ -24,14 +24,6 @@
     "description": "Mylapore is one of Chennai's oldest neighborhoods, and grew up around the Kapaleeshwarar Temple and its large stepped tank. Its narrow streets are full of flower sellers, silk shops and tiffin rooms. It is also a center of Carnatic music during the December music season."
   },
   {
-    "id": "omr-perungudi",
-    "name": "OMR IT corridor",
-    "nameLocal": "பழைய மாமல்லபுரம் சாலை",
-    "area": "Perungudi / Thoraipakkam",
-    "lat": 12.9121, "lon": 80.2255, "radiusM": 600,
-    "description": "Old Mahabalipuram Road (OMR), officially Rajiv Gandhi Salai, runs south from Chennai toward Mahabalipuram. Since the early 2000s it has become the city's IT corridor, lined with technology parks and office campuses."
-  },
-  {
     "id": "omr-navalur",
     "name": "Navalur",
     "nameLocal": "நாவலூர்",

@@ -1,8 +1,16 @@
-// For each album, reads the original photos (read only), extracts EXIF metadata,
-// and writes EXIF-free WebP copies plus photos.json into the album's generated/
-// folder. Place assignment happens in the app, so editing places.json never
-// requires re-running this script.
-// SRS: FR-1, FR-3, FR-4, FR-17, NFR-2, NFR-8.
+// For each album, reads the original photos, extracts EXIF metadata, and writes
+// EXIF-free WebP copies plus photos.json into the album's generated/ folder.
+// Place assignment happens in the app, so editing places.json never requires
+// re-running this script.
+// SRS: FR-1, FR-3, FR-4, FR-14, FR-17, FR-21, FR-22, NFR-2, NFR-8.
+//
+// Edited copies (FR-21): Google Photos saves an edit as "X~2.jpg" with no EXIF.
+// Before building, each such copy gets the date, location and camera of its
+// original "X.jpg" (or "X.MP.jpg"), the original is deleted, and the copy is
+// renamed to "X.jpg", so the photo keeps its id, caption and links.
+//
+// Tidying (FR-22): after building, places with no photos are removed from
+// places.json and captions of photos that no longer exist from captions.json.
 //
 // Change detection: generated/build-manifest.json records a SHA-256 of each
 // original and the image settings used. A photo's WebP copies are rebuilt when
@@ -14,12 +22,16 @@
 // Usage: npm run photos                 (every album that has an originals/ folder)
 //        npm run photos -- chennai-2026  (one album)
 
-import { readdir, readFile, writeFile, mkdir, stat, unlink, access } from 'node:fs/promises';
+import { readdir, readFile, writeFile, mkdir, stat, unlink, access, rename } from 'node:fs/promises';
 import { createReadStream } from 'node:fs';
 import { createHash } from 'node:crypto';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import path from 'node:path';
 import exifr from 'exifr';
 import sharp from 'sharp';
+import { exiftoolPath } from 'exiftool-vendored';
+import { type PlaceFile, nearestPlace } from '../src/places.ts';
 
 const ALBUMS_DIR = path.resolve(import.meta.dirname, '..', '..', 'albums');
 const SIZES = { thumbs: 400, display: 1600 } as const;
@@ -165,10 +177,153 @@ async function removeStale(dir: string, keep: Set<string>): Promise<number> {
   return removed;
 }
 
+// "X~2.jpg" or "X.MP~2.jpg" -> base "X". Checked before ORIGINAL_RE, which would also match.
+const EDIT_RE = /^(.+?)(\.MP)?~\d+\.jpe?g$/i;
+const ORIGINAL_RE = /^(.+?)(\.MP)?\.jpe?g$/i;
+
+/** Merges each edited copy into its original (FR-21). Returns notes for the log. */
+async function mergeEdits(srcDir: string): Promise<string[]> {
+  const all = await readdir(srcDir);
+  const originals = new Map<string, string>();
+  const edits = new Map<string, string[]>();
+  for (const f of all) {
+    const edit = f.match(EDIT_RE);
+    if (edit) edits.set(edit[1], [...(edits.get(edit[1]) ?? []), f]);
+    else {
+      const orig = f.match(ORIGINAL_RE);
+      if (orig) originals.set(orig[1], f);
+    }
+  }
+  if (edits.size === 0) return [];
+
+  // Check everything before changing anything.
+  for (const [base, list] of edits) {
+    if (list.length > 1) {
+      throw new Error(
+        `${base} has more than one edited copy in originals/ (${list.sort().join(', ')}). ` +
+          'Delete all but the one you want, then run again. Nothing was changed.',
+      );
+    }
+  }
+
+  const bin = await exiftoolPath();
+  const notes: string[] = [];
+  for (const [base, [edit]] of edits) {
+    const editPath = path.join(srcDir, edit);
+    const target = `${base}.jpg`;
+    const targetPath = path.join(srcDir, target);
+    const orig = originals.get(base);
+
+    if (!orig) {
+      await rename(editPath, targetPath);
+      const gps = await exifr.gps(targetPath).catch(() => undefined);
+      notes.push(
+        `renamed ${edit} to ${target}` +
+          (gps ? '' : `. Its original isn't in originals/, so it has no location or time zone`),
+      );
+      continue;
+    }
+
+    const origPath = path.join(srcDir, orig);
+    // Copy the original's EXIF (date, time zone, GPS, camera). The edited pixels are
+    // already upright, so Orientation is reset to 1, and the original's embedded
+    // thumbnail and pixel dimensions are left behind. XMP is not copied, so an
+    // edited Motion Photo is not marked as one.
+    await promisify(execFile)(bin, [
+      '-overwrite_original',
+      '-TagsFromFile', origPath,
+      '-EXIF:all',
+      '--Orientation', '--ThumbnailImage', '--ThumbnailOffset', '--ThumbnailLength',
+      '--ExifImageWidth', '--ExifImageHeight',
+      '-Orientation#=1',
+      editPath,
+    ]);
+
+    // Only delete the original once the copy is confirmed to carry its location.
+    const [origGps, editGps] = await Promise.all(
+      [origPath, editPath].map((f) => exifr.gps(f).catch(() => undefined)),
+    );
+    if (origGps && editGps?.latitude !== origGps.latitude) {
+      throw new Error(`Copying metadata from ${orig} into ${edit} failed. Both files are unchanged except for ${edit}'s metadata.`);
+    }
+    await unlink(origPath);
+    await rename(editPath, targetPath);
+    notes.push(`merged ${edit} into ${target}: copied the date, location and camera from ${orig}, then deleted ${orig}`);
+  }
+  return notes;
+}
+
+/** Start and end offsets of each element of the top-level JSON array in `text`. */
+function arrayElementSpans(text: string): [number, number][] {
+  const spans: [number, number][] = [];
+  let depth = 0;
+  let inString = false;
+  let start = -1;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inString) {
+      if (c === '\\') i++;
+      else if (c === '"') inString = false;
+    } else if (c === '"') inString = true;
+    else if (c === '[' || c === '{') {
+      if (depth === 1) start = i;
+      depth++;
+    } else if (c === ']' || c === '}') {
+      depth--;
+      if (depth === 1) spans.push([start, i + 1]);
+    }
+  }
+  return spans;
+}
+
+/** Removes empty places and orphaned captions (FR-22). Returns notes for the log. */
+async function tidyAlbumFiles(albumDir: string, photos: PhotoRecord[]): Promise<string[]> {
+  const notes: string[] = [];
+  const ids = new Set(photos.map((p) => p.id));
+
+  // Skip when no photo has GPS: every place would look empty.
+  const placesPath = path.join(albumDir, 'places.json');
+  const placesText = await readFile(placesPath, 'utf8').catch(() => null);
+  if (placesText && photos.some((p) => p.lat != null)) {
+    const places = JSON.parse(placesText) as PlaceFile[];
+    const used = new Set(photos.map((p) => nearestPlace(places, p)));
+    const empty = places.filter((pl) => !used.has(pl.id));
+    const spans = arrayElementSpans(placesText);
+    if (empty.length && spans.length === places.length) {
+      // Keep the remaining entries exactly as written.
+      const kept = spans.filter((_, i) => used.has(places[i].id)).map(([a, b]) => placesText.slice(a, b));
+      await writeFile(placesPath, kept.length ? `[\n  ${kept.join(',\n  ')}\n]\n` : '[]\n');
+      notes.push(`removed from places.json (no photos left): ${empty.map((pl) => pl.name).join(', ')}`);
+    }
+  }
+
+  const captionsPath = path.join(albumDir, 'captions.json');
+  const captions = await readJson<Record<string, string>>(captionsPath);
+  if (captions) {
+    const orphans = Object.keys(captions).filter((id) => !ids.has(id));
+    if (orphans.length) {
+      for (const id of orphans) delete captions[id];
+      await writeFile(captionsPath, JSON.stringify(captions, null, 2) + '\n');
+      notes.push(`removed ${orphans.length} caption(s) of deleted photos from captions.json`);
+    }
+  }
+
+  const cover = (await readJson<{ coverPhotoId?: string }>(path.join(albumDir, 'album.json')))?.coverPhotoId;
+  if (cover && !ids.has(cover)) {
+    notes.push(`WARNING: album.json's coverPhotoId ${cover} no longer exists; the first photo is used instead`);
+  }
+
+  const noCaption = photos.filter((p) => !captions?.[p.id]).map((p) => p.id);
+  if (noCaption.length) notes.push(`no caption yet: ${noCaption.join(', ')}`);
+  return notes;
+}
+
 async function buildAlbum(album: string) {
   const started = Date.now();
-  const srcDir = path.join(ALBUMS_DIR, album, 'originals');
-  const outDir = path.join(ALBUMS_DIR, album, 'generated');
+  const albumDir = path.join(ALBUMS_DIR, album);
+  const srcDir = path.join(albumDir, 'originals');
+  const outDir = path.join(albumDir, 'generated');
+  const notes = await mergeEdits(srcDir);
   const files = (await readdir(srcDir)).filter((f) => /\.jpe?g$/i.test(f)).sort();
   if (files.length === 0) throw new Error(`No JPEGs found in ${srcDir}`);
 
@@ -215,8 +370,10 @@ async function buildAlbum(album: string) {
       `(${photos.length} photos, ${secs} s)` +
       (stale ? `; deleted ${stale} stale image files` : ''),
   );
-  const missing = photos.filter((p) => p.lat == null).length;
-  if (missing) console.warn(`  ${missing} photo(s) have no GPS and will not appear on the map`);
+  notes.push(...(await tidyAlbumFiles(albumDir, photos)));
+  const missing = photos.filter((p) => p.lat == null).map((p) => p.id);
+  if (missing.length) notes.push(`no GPS, so not on the map: ${missing.join(', ')}`);
+  for (const n of notes) console.log(`  ${n}`);
 }
 
 async function main() {
@@ -238,6 +395,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error(err);
+  console.error(process.env.DEBUG || !(err instanceof Error) ? err : `\nError: ${err.message}`);
   process.exit(1);
 });

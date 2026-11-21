@@ -14,7 +14,7 @@ Photo Albums is a personal, static website that shows trip photos with where and
 
 ## 2. Album: Chennai, November 2026
 
-All 74 photos have GPS coordinates and a capture time. They were taken on a Pixel 10 Pro Fold over 4 days, 15–18 Nov 2026 (IST, UTC+05:30). 12 are Motion Photos. The originals total about 330 MB, and the web copies about 30 MB.
+All 69 photos have GPS coordinates and a capture time. They were taken on a Pixel 10 Pro Fold over 4 days, 15–18 Nov 2026 (IST, UTC+05:30). 10 are Motion Photos. The originals total about 300 MB, and the web copies about 28 MB.
 
 I matched place names to the coordinates from my own knowledge of the area, and wrote the captions after looking at each photo. Both are in the album folder for the owner to check and edit.
 
@@ -23,7 +23,6 @@ I matched place names to the coordinates from my own knowledge of the area, and 
 | Sun 15 Nov | 07:56 | Chennai International Airport | சென்னை பன்னாட்டு வானூர்தி நிலையம் | 1 |
 | Sun 15 Nov | 18:43–18:44 | Kapaleeshwarar Temple, Mylapore | கபாலீசுவரர் கோயில் | 2 |
 | Sun 15 Nov | 19:04 | Mylapore streets | மயிலாப்பூர் தெருக்கள் | 2 |
-| Mon 16 Nov | 09:51–10:59 | OMR IT corridor (Ford + Red Hat event) | பழைய மாமல்லபுரம் சாலை | 5 |
 | Mon 16 Nov | 21:21 | Navalur (banana-leaf dinner) | நாவலூர் | 1 |
 | Tue 17 Nov | 18:13–18:34 | Guindy (rooftop dinner) | கிண்டி | 3 |
 | Wed 18 Nov | 10:31–11:01 | Mahabalipuram: Pancha Rathas | பஞ்ச ரதங்கள் | 22 |
@@ -32,7 +31,7 @@ I matched place names to the coordinates from my own knowledge of the area, and 
 | Wed 18 Nov | 12:11 | Mahabalipuram beach | மாமல்லபுரம் கடற்கரை | 1 |
 | Wed 18 Nov | 14:57–15:28 | San Thome Basilica, Santhome | சாந்தோம் பேராலயம் | 4 |
 
-The owner will confirm the OMR, Navalur and Guindy stops after viewing the deployed site.
+The owner will confirm the Navalur and Guindy stops after viewing the deployed site.
 
 ## 3. Overall description
 
@@ -62,13 +61,15 @@ Priority **Must** and **Should** are in v1. **Could** is deferred.
 | FR-11 | **Album header:** the title in English and the local language, a one-line summary, the dates, and counts of photos, places and days, plus the distance travelled between stops. | Should |
 | FR-12 | **Filters:** filter the gallery by day and by place. Filter state is kept in the URL so links can be shared. | Should |
 | FR-13 | **Deep links:** each album, view and photo has its own URL, for example `#/chennai-2026/photo/PXL_20261118_053619579`. | Should |
-| FR-14 | **Captions:** each album has a `captions.json` with one caption per photo, drafted by Claude for the owner to edit. | Must |
+| FR-14 | **Captions:** each album has a `captions.json` with one caption per photo, drafted by Claude for the owner to edit. The build lists photos that have no caption yet. | Must |
 | FR-15 | **Motion Photos:** `.MP.jpg` files show a badge. Playing the embedded video clip is deferred. | Should (badge) / Could (playback) |
 | FR-16 | **Nearby places:** the viewer lists other places within 2 km. | Could |
 | FR-17 | Re-running the build after adding, removing or changing photos updates the album, including removing images of deleted photos. It ends with a summary line of photos added, updated, removed and unchanged. See *Change detection* in section 6. | Must |
 | FR-18 | **Slideshow:** plays the currently filtered photos, advancing every 4 seconds, with play and pause in the viewer and a progress bar. | Must |
 | FR-19 | **Album list:** the home page shows one card per album with its cover photo, titles, dates and counts. | Must |
 | FR-20 | **Adding an album:** create `albums/<id>/` with `album.json`, `places.json`, `captions.json` and an `originals/` folder, then run `npm run photos`. No code changes are needed. | Must |
+| FR-21 | **Edited copies:** Google Photos saves an edited photo as a new file, such as `X~2.jpg`, with no EXIF. When the build finds one next to its original (`X.jpg` or `X.MP.jpg`), it copies the original's EXIF (date, time zone, GPS, camera) into the copy, deletes the original, and renames the copy to `X.jpg`. The photo keeps its id, caption and links. An edited Motion Photo becomes a still photo. If a photo has more than one edited copy, the build stops without changing anything and asks the owner to keep one. | Must |
+| FR-22 | **Tidying:** after each build, places with no photos are removed from `places.json`, and captions of photos that no longer exist are removed from `captions.json`. Remaining entries keep their formatting. The build warns if `coverPhotoId` no longer exists. | Must |
 
 ## 5. Non-functional requirements
 
@@ -81,7 +82,7 @@ Priority **Must** and **Should** are in v1. **Could** is deferred.
 | NFR-5 | Accessibility | Every image has alt text (the caption, or the place and time). The viewer works by keyboard alone and keeps focus inside it. Tamil and other local text is marked with its `lang`. |
 | NFR-6 | Theming | Light and dark themes follow the system setting. |
 | NFR-7 | Maintainability | TypeScript throughout. Album content is plain JSON that can be edited without touching code. |
-| NFR-8 | Integrity | Original photos are never modified or uploaded. |
+| NFR-8 | Integrity | Original photos are never uploaded. The build changes `originals/` only to merge an edited copy into its original (FR-21), which deletes the original. It deletes the original only after confirming the copy carries its location. The owner keeps full copies in Google Photos. |
 | NFR-9 | Privacy | `albums/*/originals/` is excluded from git. Only the EXIF-free WebP copies and JSON are committed and published. |
 
 ## 6. Data and architecture
@@ -89,7 +90,7 @@ Priority **Must** and **Should** are in v1. **Could** is deferred.
 ```mermaid
 flowchart LR
     A["<b>albums/&lt;id&gt;/originals/</b><br/>JPEGs, git-ignored"]
-    B["<b>npm run photos</b><br/>exifr reads date and GPS<br/>sharp writes WebP, no EXIF"]
+    B["<b>npm run photos</b><br/>merges edited copies<br/>exifr reads date and GPS<br/>sharp writes WebP, no EXIF"]
     C["<b>albums/&lt;id&gt;/generated/</b><br/>photos.json<br/>thumbs/ display/"]
     D["<b>albums/&lt;id&gt;/*.json</b><br/>album, places, captions<br/>(owner edits)"]
     E["<b>Web app (Vite + TS)</b><br/>Albums, Gallery, Map,<br/>Places, Viewer, Slideshow"]
@@ -101,15 +102,15 @@ flowchart LR
 
 The photo build runs on the owner's machine, because only it has the originals. GitHub Actions builds the app from the committed `generated/` and JSON files.
 
-**Tech stack:** `exifr` (EXIF), `sharp` (resizing and WebP), Vite 6 + TypeScript with no framework, Leaflet 1.9 + OpenStreetMap tiles, plain CSS with custom properties, Node 22.18 or newer.
+**Tech stack:** `exifr` (reading EXIF), `exiftool-vendored` (copying EXIF into edited copies), `sharp` (resizing and WebP), Vite 6 + TypeScript with no framework, Leaflet 1.9 + OpenStreetMap tiles, plain CSS with custom properties, Node 22.18 or newer.
 
 **Album files**
 
 | File | Contents | Edited by |
 | --- | --- | --- |
 | `album.json` | `title`, `titleLocal`, `summary`, `localLanguage` (`code`, `name`), `timeZoneLabel`, `coverPhotoId`, `sortOrder` | Owner |
-| `places.json` | per place: `id`, `name`, `nameLocal`, `area`, `lat`, `lon`, `radiusM`, `description` | Owner |
-| `captions.json` | photo id → caption | Owner |
+| `places.json` | per place: `id`, `name`, `nameLocal`, `area`, `lat`, `lon`, `radiusM`, `description` | Owner. The build removes places with no photos (FR-22). |
+| `captions.json` | photo id → caption | Owner. The build removes captions of deleted photos (FR-22). |
 | `generated/photos.json` | per photo: `id`, `file`, `takenAt`, `lat`, `lon`, `alt`, `width`, `height`, `camera`, `motion`, `thumb`, `display` | Build only |
 | `generated/build-manifest.json` | the image settings used, and per photo: `file` and a SHA-256 of the original | Build only |
 
@@ -125,6 +126,8 @@ The photo build runs on the owner's machine, because only it has the originals. 
 | **Image settings changed** | Yes | The manifest records the sizes, WebP quality and a pipeline version. If any of them change, every photo is rebuilt. |
 | **WebP copy deleted by hand** | Yes | A missing copy is recreated. |
 | **EXIF edited** | Yes | EXIF is re-read from every original on every run, so `photos.json` is always current even when the images are skipped. |
+| **Edited copy added** (`X~2.jpg`) | Yes | It is merged into its original first (FR-21), then counted as an update to `X`. |
+| **Place left with no photos** | Yes | The place is removed from `places.json`, and the captions of deleted photos are removed from `captions.json` (FR-22). |
 
 Hashing the originals takes well under a second per album, so an unchanged re-run is fast (NFR-2). Two originals that differ only by `.MP` (for example `X.jpg` and `X.MP.jpg`) would share a photo id. This does not happen with Pixel file names, so it is not handled.
 
@@ -157,4 +160,7 @@ Answers from the owner, 20 Nov 2026.
 | Languages | Place names and album titles in English and the local language. |
 | Captions | Claude drafts captions now, and the owner edits them. |
 | Could items in v1 | FR-18 slideshow (now Must). FR-16 and Motion Photo playback stay deferred. |
+| Removed photos (20–21 Nov) | The second airport photo and the five OMR photos. The OMR place is removed. |
+| Edited copies from Google Photos | The build merges each one into its original and deletes the original (FR-21). The owner keeps full copies in Google Photos. |
+| Places with no photos | Removed from `places.json` automatically (FR-22). |
 | Trip title | "Chennai, November 2026". |
