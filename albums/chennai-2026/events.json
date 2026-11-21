@@ -41,7 +41,17 @@
     "place": "Navalur",
     "date": "2026-11-16",
     "checked": "2026-11-21",
-    "events": []
+    "events": [
+      {
+        "name": "Dinner with the team at Fazari Restaurant",
+        "nameLocal": "",
+        "startDate": "2026-11-16",
+        "endDate": "2026-11-16",
+        "description": "Amazing restaurant with dishes from all across Asia",
+        "sourceUrl": "https://www.instagram.com/fazarirestaurant/?hl=en",
+        "confidence": "high"
+      }
+    ]
   },
   "guindy@2026-11-17": {
     "place": "Guindy",
