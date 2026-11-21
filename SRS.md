@@ -114,9 +114,46 @@ The photo build runs on the owner's machine, because only it has the originals. 
 | `generated/photos.json` | per photo: `id`, `file`, `takenAt`, `lat`, `lon`, `alt`, `width`, `height`, `camera`, `motion`, `thumb`, `display` | Build only |
 | `generated/build-manifest.json` | the image settings used, and per photo: `file` and a SHA-256 of the original | Build only |
 
+**The photo build (`npm run photos`)**
+
+The owner runs `npm run photos` after adding, removing or editing photos in an album's `originals/`. It runs from the repository root or from `app/`. With no argument it builds every album that has an `originals/` folder on this machine. `npm run photos -- <album-id>` builds one album. Albums without an `originals/` folder are skipped, and their committed `generated/` files are left as they are.
+
+For each album, it works through these steps in order:
+
+1. **Merge edited copies (FR-21).** It looks for files named like `X~2.jpg` or `X.MP~2.jpg`. If any photo has more than one edited copy, it stops before changing anything. For each edited copy, it copies the original's EXIF (date, time zone, GPS, camera) into the copy with exiftool. It resets the orientation to upright, because the edited pixels already are, and leaves out the original's embedded thumbnail. It checks that the copy now has the original's location. Only then does it delete the original and rename the copy to `X.jpg`. An edited copy with no original is just renamed.
+2. **Read each photo.** For every `.jpg` or `.jpeg` in `originals/`, four at a time, it reads:
+   - the SHA-256 of the file
+   - the capture time and its UTC offset
+   - the GPS latitude and longitude, and the altitude rounded to 0.1 m
+   - the camera model
+   - the width and height after applying the orientation
+
+   A photo's id is its file name without `.MP` and `.jpg`. A file name with `.MP` marks a Motion Photo.
+3. **Write web images (FR-3, FR-4).** It writes two WebP copies at quality 80: `thumbs/` (400 px) and `display/` (1600 px). The size is the longest side, and photos are never enlarged. Copies are rotated upright and contain no EXIF, GPS or XMP. A photo is skipped when its SHA-256 and the image settings match `build-manifest.json` and both copies exist (see *Change detection*).
+4. **Remove stale images (FR-17).** It deletes any `.webp` in `thumbs/` or `display/` that has no matching original.
+5. **Write `generated/photos.json` and `generated/build-manifest.json`.** Photos are listed in capture-time order. Both files are rewritten from scratch on every run.
+6. **Tidy the album files (FR-22).** It removes places with no photos from `places.json`, using the same nearest-place rule as the app (FR-2). It removes captions of photos that no longer exist from `captions.json`. It skips the place check if no photo has GPS data, because every place would then look empty.
+7. **Report.** It prints a summary line, then a line for each of these that applies:
+   - each edited copy it merged
+   - places and captions it removed
+   - a `coverPhotoId` that no longer exists
+   - photos with no caption yet
+   - photos with no GPS data
+
+   For example:
+
+   ```
+   chennai-2026: 0 added, 1 updated, 0 removed, 68 unchanged (69 photos, 1.1 s)
+     merged PXL_20261115_131355309~2.jpg into PXL_20261115_131355309.jpg: copied the date, location and camera from PXL_20261115_131355309.jpg, then deleted PXL_20261115_131355309.jpg
+   ```
+
+The build stops with an error, and exits with status 1, when an album's `originals/` has no JPEGs, when a photo has more than one edited copy, or when copying metadata into an edited copy fails. In the last case the original is kept. Setting `DEBUG=1` prints the full stack trace.
+
+The build does not commit, push or deploy. The owner reviews the changes, then commits and pushes `generated/` and the JSON files. GitHub Actions never runs the photo build, because the originals are not in the repository.
+
 **Change detection**
 
-`npm run photos` compares each album's `originals/` with what it built last time, and ends with a line such as `chennai-2026: 3 added, 1 updated, 2 removed, 69 unchanged`.
+`npm run photos` compares each album's `originals/` with what it built last time, and reports the result in the summary line.
 
 | Change | Detected? | How |
 | --- | --- | --- |
@@ -136,6 +173,7 @@ Hashing the originals takes well under a second per album, so an unchanged re-ru
 ```
 photo-albums/
   SRS.md
+  package.json                   runs the app/ npm commands from the root
   .github/workflows/deploy.yml   builds and publishes to GitHub Pages
   albums/
     chennai-2026/
@@ -144,7 +182,7 @@ photo-albums/
       generated/                 committed
   app/
     scripts/build-photos.ts      npm run photos [album-id]
-    src/                         main.ts, data.ts, viewer.ts, map.ts, styles.css
+    src/                         main.ts, data.ts, places.ts, viewer.ts, map.ts, styles.css
     vite.config.ts               serves and copies albums/*, never originals/
 ```
 
