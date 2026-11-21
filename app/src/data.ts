@@ -19,6 +19,7 @@ export interface PhotoFile {
   motion: boolean;
   thumb: string;
   display: string;
+  v?: string; // image version, for cache busting
 }
 
 export interface Photo extends PhotoFile {
@@ -59,7 +60,8 @@ export interface Album extends AlbumFile {
 const BASE = `${import.meta.env.BASE_URL}albums/`;
 
 async function getJson<T>(url: string, fallback?: T): Promise<T> {
-  const res = await fetch(url);
+  // Always check with the server for a newer copy; an unchanged file costs a 304.
+  const res = await fetch(url, { cache: 'no-cache' });
   if (!res.ok) {
     if (fallback !== undefined) return fallback;
     throw new Error(`Could not load ${url} (${res.status})`);
@@ -98,8 +100,8 @@ async function fetchAlbum(id: string): Promise<Album> {
     caption: captions[p.id] ?? '',
     day: p.takenAt?.slice(0, 10) ?? 'unknown',
     time: p.takenAt?.slice(11, 16) ?? '',
-    thumbUrl: `${dir}generated/${p.thumb}`,
-    displayUrl: `${dir}generated/${p.display}`,
+    thumbUrl: `${dir}generated/${p.thumb}${p.v ? `?v=${p.v}` : ''}`,
+    displayUrl: `${dir}generated/${p.display}${p.v ? `?v=${p.v}` : ''}`,
     index,
   }));
 

@@ -84,6 +84,7 @@ Priority **Must** and **Should** are in v1. **Could** is deferred.
 | NFR-7 | Maintainability | TypeScript throughout. Album content is plain JSON that can be edited without touching code. |
 | NFR-8 | Integrity | Original photos are never uploaded. The build changes `originals/` only to merge an edited copy into its original (FR-21), which deletes the original. It deletes the original only after confirming the copy carries its location. The owner keeps full copies in Google Photos. |
 | NFR-9 | Privacy | `albums/*/originals/` is excluded from git. Only the EXIF-free WebP copies and JSON are committed and published. |
+| NFR-10 | Freshness | GitHub Pages lets browsers cache files for 10 minutes. Changes must still show up as soon as a deploy finishes. Each image URL ends in `?v=<version>`, which changes whenever the photo's WebP copies are rebuilt from different input, so an edited photo gets a new URL even though its file name stays the same. The app fetches the JSON files with `cache: 'no-cache'`, so it always checks for newer data. An unchanged file costs only a quick "not modified" reply. |
 
 ## 6. Data and architecture
 
@@ -111,7 +112,7 @@ The photo build runs on the owner's machine, because only it has the originals. 
 | `album.json` | `title`, `titleLocal`, `summary`, `localLanguage` (`code`, `name`), `timeZoneLabel`, `coverPhotoId`, `sortOrder` | Owner |
 | `places.json` | per place: `id`, `name`, `nameLocal`, `area`, `lat`, `lon`, `radiusM`, `description` | Owner. The build removes places with no photos (FR-22). |
 | `captions.json` | photo id → caption | Owner. The build removes captions of deleted photos (FR-22). |
-| `generated/photos.json` | per photo: `id`, `file`, `takenAt`, `lat`, `lon`, `alt`, `width`, `height`, `camera`, `motion`, `thumb`, `display` | Build only |
+| `generated/photos.json` | per photo: `id`, `file`, `takenAt`, `lat`, `lon`, `alt`, `width`, `height`, `camera`, `motion`, `thumb`, `display`, `v` (image version for cache busting, NFR-10) | Build only |
 | `generated/build-manifest.json` | the image settings used, and per photo: `file` and a SHA-256 of the original | Build only |
 
 **The photo build (`npm run photos`)**
@@ -131,7 +132,7 @@ For each album, it works through these steps in order:
    A photo's id is its file name without `.MP` and `.jpg`. A file name with `.MP` marks a Motion Photo.
 3. **Write web images (FR-3, FR-4).** It writes two WebP copies at quality 80: `thumbs/` (400 px) and `display/` (1600 px). The size is the longest side, and photos are never enlarged. Copies are rotated upright and contain no EXIF, GPS or XMP. A photo is skipped when its SHA-256 and the image settings match `build-manifest.json` and both copies exist (see *Change detection*).
 4. **Remove stale images (FR-17).** It deletes any `.webp` in `thumbs/` or `display/` that has no matching original.
-5. **Write `generated/photos.json` and `generated/build-manifest.json`.** Photos are listed in capture-time order. Both files are rewritten from scratch on every run.
+5. **Write `generated/photos.json` and `generated/build-manifest.json`.** Photos are listed in capture-time order. Each photo's `v` is a short hash of its original's SHA-256 and the image settings, so it changes exactly when the WebP copies are rebuilt from different input (NFR-10). Both files are rewritten from scratch on every run.
 6. **Tidy the album files (FR-22).** It removes places with no photos from `places.json`, using the same nearest-place rule as the app (FR-2). It removes captions of photos that no longer exist from `captions.json`. It skips the place check if no photo has GPS data, because every place would then look empty.
 7. **Report.** It prints a summary line, then a line for each of these that applies:
    - each edited copy it merged

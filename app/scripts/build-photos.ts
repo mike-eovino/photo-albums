@@ -61,6 +61,9 @@ interface PhotoRecord {
   motion: boolean;
   thumb: string;
   display: string;
+  // Changes whenever the WebP copies are rebuilt from different input. The app adds
+  // it to image URLs (?v=...) so browsers fetch an edited photo instead of a cached one.
+  v: string;
 }
 
 // "2026:11:18 11:06:19" + "+05:30" -> "2026-11-18T11:06:19+05:30"
@@ -162,6 +165,7 @@ async function processPhoto(
     motion: /\.MP\.jpe?g$/i.test(file),
     thumb: rel.thumbs,
     display: rel.display,
+    v: createHash('sha256').update(hash).update(SETTINGS_KEY).digest('hex').slice(0, 10),
   };
   return { record, sha256: hash, rebuilt };
 }
