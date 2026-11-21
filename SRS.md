@@ -14,7 +14,7 @@ Photo Albums is a personal, static website that shows trip photos with where and
 
 ## 2. Album: Chennai, November 2026
 
-All 69 photos have GPS coordinates and a capture time. They were taken on a Pixel 10 Pro Fold over 4 days, 15–18 Nov 2026 (IST, UTC+05:30). 10 are Motion Photos. The originals total about 300 MB, and the web copies about 28 MB.
+All 68 photos have GPS coordinates and a capture time. They were taken on a Pixel 10 Pro Fold over 4 days, 15–18 Nov 2026 (IST, UTC+05:30). 10 are Motion Photos. The originals total about 280 MB, and the web copies about 28 MB.
 
 I matched place names to the coordinates from my own knowledge of the area, and wrote the captions after looking at each photo. Both are in the album folder for the owner to check and edit.
 
@@ -26,7 +26,7 @@ I matched place names to the coordinates from my own knowledge of the area, and 
 | Mon 16 Nov | 21:21 | Navalur (banana-leaf dinner) | நாவலூர் | 1 |
 | Tue 17 Nov | 18:13–18:34 | Guindy (rooftop dinner) | கிண்டி | 3 |
 | Wed 18 Nov | 10:31–11:01 | Mahabalipuram: Pancha Rathas | பஞ்ச ரதங்கள் | 22 |
-| Wed 18 Nov | 11:05–11:28 | Mahabalipuram: Arjuna's Penance and Krishna's Butter Ball | அர்ஜுனன் தபசு மற்றும் கிருஷ்ணனின் வெண்ணெய் உருண்டை | 25 |
+| Wed 18 Nov | 11:05–11:28 | Mahabalipuram: Arjuna's Penance and Krishna's Butter Ball | அர்ஜுனன் தபசு மற்றும் கிருஷ்ணனின் வெண்ணெய் உருண்டை | 24 |
 | Wed 18 Nov | 11:41–12:04 | Mahabalipuram: Shore Temple | கடற்கரைக் கோயில் | 8 |
 | Wed 18 Nov | 12:11 | Mahabalipuram beach | மாமல்லபுரம் கடற்கரை | 1 |
 | Wed 18 Nov | 14:57–15:28 | San Thome Basilica, Santhome | சாந்தோம் பேராலயம் | 4 |
@@ -198,7 +198,7 @@ Answers from the owner, 20 Nov 2026.
 | Languages | Place names and album titles in English and the local language. |
 | Captions | Claude drafts captions now, and the owner edits them. |
 | Could items in v1 | FR-18 slideshow (now Must). FR-16 and Motion Photo playback stay deferred. |
-| Removed photos (20–21 Nov) | The second airport photo and the five OMR photos. The OMR place is removed. |
+| Removed photos (20–21 Nov) | The second airport photo, the five OMR photos and one photo at Arjuna's Penance. The OMR place is removed. |
 | Edited copies from Google Photos | The build merges each one into its original and deletes the original (FR-21). The owner keeps full copies in Google Photos. |
 | Places with no photos | Removed from `places.json` automatically (FR-22). |
 | Trip title | "Chennai, November 2026". |
