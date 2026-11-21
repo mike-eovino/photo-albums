@@ -23,15 +23,15 @@ I matched place names to the coordinates from my own knowledge of the area, and 
 | Sun 15 Nov | 07:56 | Chennai International Airport | சென்னை பன்னாட்டு வானூர்தி நிலையம் | 1 |
 | Sun 15 Nov | 18:43–18:44 | Kapaleeshwarar Temple, Mylapore | கபாலீசுவரர் கோயில் | 2 |
 | Sun 15 Nov | 19:04 | Mylapore streets | மயிலாப்பூர் தெருக்கள் | 2 |
-| Mon 16 Nov | 21:21 | Navalur (banana-leaf dinner) | நாவலூர் | 1 |
-| Tue 17 Nov | 18:13–18:34 | Guindy (rooftop dinner) | கிண்டி | 3 |
+| Mon 16 Nov | 21:21 | Navalur (team dinner at Fazari Restaurant) | நாவலூர் | 1 |
+| Tue 17 Nov | 18:13–18:34 | Guindy (team dinner on the Ramada Plaza rooftop) | கிண்டி | 3 |
 | Wed 18 Nov | 10:31–11:01 | Mahabalipuram: Pancha Rathas | பஞ்ச ரதங்கள் | 22 |
 | Wed 18 Nov | 11:05–11:28 | Mahabalipuram: Arjuna's Penance and Krishna's Butter Ball | அர்ஜுனன் தபசு மற்றும் கிருஷ்ணனின் வெண்ணெய் உருண்டை | 23 |
 | Wed 18 Nov | 11:41–12:04 | Mahabalipuram: Shore Temple | கடற்கரைக் கோயில் | 8 |
 | Wed 18 Nov | 12:11 | Mahabalipuram beach | மாமல்லபுரம் கடற்கரை | 1 |
 | Wed 18 Nov | 14:57–15:28 | San Thome Basilica, Santhome | சாந்தோம் பேராலயம் | 4 |
 
-The owner will confirm the Navalur and Guindy stops after viewing the deployed site.
+The owner confirmed the Navalur and Guindy stops on 21 Nov 2026: team dinners at Fazari Restaurant and on the Ramada Plaza by Wyndham Chennai rooftop. Both are recorded as events in `events.json`.
 
 ## 3. Overall description
 
@@ -201,7 +201,7 @@ Answers from the owner, 20 Nov 2026.
 
 | Question | Decision |
 | --- | --- |
-| Are the place names right? | To be checked by the owner on the deployed site. |
+| Are the place names right? | Yes. The owner checked them on the deployed site; Navalur and Guindy were confirmed on 21 Nov. |
 | Should any place be blurred? | No. Private photos will be removed instead. |
 | Repository layout | One `photo-albums` repository with a folder per album, served at `mike-eovino.github.io/photo-albums/`. |
 | Languages | Place names and album titles in English and the local language. |

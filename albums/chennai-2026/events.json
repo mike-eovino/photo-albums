@@ -57,7 +57,17 @@
     "place": "Guindy",
     "date": "2026-11-17",
     "checked": "2026-11-21",
-    "events": []
+    "events": [
+      {
+        "name": "Dinner with the team at the Ramada Plaza rooftop",
+        "nameLocal": "",
+        "startDate": "2026-11-17",
+        "endDate": "2026-11-17",
+        "description": "Another great restaurant with an amazing view of the city of Chennai",
+        "sourceUrl": "https://www.wyndhamhotels.com/ramada/chennai-india/ramada-plaza-chennai",
+        "confidence": "high"
+      }
+    ]
   },
   "arjunas-penance@2026-11-18": {
     "place": "Arjuna's Penance and Krishna's Butter Ball",
