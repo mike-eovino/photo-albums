@@ -489,16 +489,17 @@
       "id": "PXL_20240625_105510393",
       "file": "PXL_20240625_105510393.jpg",
       "takenAt": "2024-06-25T11:55:10+01:00",
-      "lat": 56.332727777777784,
-      "lon": -2.7894972222222223,
-      "alt": 117.4,
+      "lat": 56.32151666666667,
+      "lon": -2.7356777777777777,
+      "alt": null,
       "width": 4080,
       "height": 3072,
       "camera": "Pixel 7",
       "motion": false,
       "thumb": "thumbs/PXL_20240625_105510393.webp",
       "display": "display/PXL_20240625_105510393.webp",
-      "v": "ea15130f00"
+      "v": "ea15130f00",
+      "locationSetByHand": true
     },
     {
       "id": "PXL_20240625_105512804",
