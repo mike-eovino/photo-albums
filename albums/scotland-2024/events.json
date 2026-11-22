@@ -1,0 +1,175 @@
+{
+  "heathrow@2024-06-24": {
+    "place": "Heathrow Terminal 5",
+    "date": "2024-06-24",
+    "checked": "2026-11-21",
+    "events": []
+  },
+  "edinburgh-airport@2024-06-24": {
+    "place": "Edinburgh Airport",
+    "date": "2024-06-24",
+    "checked": "2026-11-21",
+    "events": []
+  },
+  "kinross@2024-06-24": {
+    "place": "M90 near Kinross",
+    "date": "2024-06-24",
+    "checked": "2026-11-21",
+    "events": []
+  },
+  "howe-of-fife@2024-06-24": {
+    "place": "Howe of Fife",
+    "date": "2024-06-24",
+    "checked": "2026-11-21",
+    "events": []
+  },
+  "road-to-st-andrews@2024-06-24": {
+    "place": "Road into St Andrews",
+    "date": "2024-06-24",
+    "checked": "2026-11-21",
+    "events": []
+  },
+  "fairmont@2024-06-24": {
+    "place": "Fairmont St Andrews",
+    "date": "2024-06-24",
+    "checked": "2026-11-21",
+    "events": []
+  },
+  "fairmont@2024-06-25": {
+    "place": "Fairmont St Andrews",
+    "date": "2024-06-25",
+    "checked": "2026-11-21",
+    "events": []
+  },
+  "st-andrews-town@2024-06-25": {
+    "place": "St Andrews",
+    "date": "2024-06-25",
+    "checked": "2026-11-21",
+    "events": []
+  },
+  "old-course@2024-06-25": {
+    "place": "The Old Course",
+    "date": "2024-06-25",
+    "checked": "2026-11-21",
+    "events": []
+  },
+  "old-course@2024-06-26": {
+    "place": "The Old Course",
+    "date": "2024-06-26",
+    "checked": "2026-11-21",
+    "events": []
+  },
+  "castle-course@2024-06-26": {
+    "place": "The Castle Course",
+    "date": "2024-06-26",
+    "checked": "2026-11-21",
+    "events": []
+  },
+  "old-course@2024-06-27": {
+    "place": "The Old Course",
+    "date": "2024-06-27",
+    "checked": "2026-11-21",
+    "events": []
+  },
+  "st-andrews-town@2024-06-27": {
+    "place": "St Andrews",
+    "date": "2024-06-27",
+    "checked": "2026-11-21",
+    "events": []
+  },
+  "fairmont@2024-06-27": {
+    "place": "Fairmont St Andrews",
+    "date": "2024-06-27",
+    "checked": "2026-11-21",
+    "events": []
+  },
+  "kingsbarns@2024-06-28": {
+    "place": "Kingsbarns Golf Links",
+    "date": "2024-06-28",
+    "checked": "2026-11-21",
+    "events": [
+      {
+        "name": "Rita's first eagle",
+        "nameLocal": "",
+        "venue": "Kingsbarns Golf Links",
+        "description": "Rita made her first eagle at Kingsbarns.",
+        "startDate": "2024-06-28",
+        "endDate": "2024-06-28",
+        "sourceUrl": "",
+        "confidence": "high"
+      }
+    ]
+  },
+  "dumbarnie@2024-06-29": {
+    "place": "Dumbarnie Links",
+    "date": "2024-06-29",
+    "checked": "2026-11-21",
+    "events": []
+  },
+  "old-course@2024-06-30": {
+    "place": "The Old Course",
+    "date": "2024-06-30",
+    "checked": "2026-11-21",
+    "events": []
+  },
+  "old-course@2024-07-01": {
+    "place": "The Old Course",
+    "date": "2024-07-01",
+    "checked": "2026-11-21",
+    "events": []
+  },
+  "eden-course@2024-07-01": {
+    "place": "Eden Course",
+    "date": "2024-07-01",
+    "checked": "2026-11-21",
+    "events": []
+  },
+  "old-course@2024-07-02": {
+    "place": "The Old Course",
+    "date": "2024-07-02",
+    "checked": "2026-11-21",
+    "events": []
+  },
+  "edinburgh-old-town@2024-07-03": {
+    "place": "Royal Mile and Victoria Street",
+    "date": "2024-07-03",
+    "checked": "2026-11-21",
+    "events": []
+  },
+  "princes-street-gardens@2024-07-03": {
+    "place": "Princes Street Gardens",
+    "date": "2024-07-03",
+    "checked": "2026-11-21",
+    "events": []
+  },
+  "west-end@2024-07-03": {
+    "place": "Usher Hall and the West End",
+    "date": "2024-07-03",
+    "checked": "2026-11-21",
+    "events": []
+  },
+  "lauriston@2024-07-03": {
+    "place": "Lauriston Place",
+    "date": "2024-07-03",
+    "checked": "2026-11-21",
+    "events": []
+  },
+  "holyrood@2024-07-03": {
+    "place": "Holyrood Park",
+    "date": "2024-07-03",
+    "checked": "2026-11-21",
+    "events": []
+  },
+  "new-town@2024-07-04": {
+    "place": "New Town",
+    "date": "2024-07-04",
+    "checked": "2026-11-21",
+    "events": []
+  },
+  "west-end@2024-07-04": {
+    "place": "Usher Hall and the West End",
+    "date": "2024-07-04",
+    "checked": "2026-11-21",
+    "events": []
+  }
+}
