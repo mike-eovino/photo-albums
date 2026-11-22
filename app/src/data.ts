@@ -20,6 +20,10 @@ export interface PhotoFile {
   thumb: string;
   display: string;
   v?: string; // image version, for cache busting
+  locationSetByHand?: true; // position from overrides.json, not the photo's GPS (FR-25)
+  dateSetByHand?: true; // capture time from overrides.json (FR-25)
+  video?: string; // videos only (FR-24): web copy, relative to generated/; thumb and display are a still frame
+  duration?: number; // videos only: length in seconds
 }
 
 export interface Photo extends PhotoFile {
@@ -29,6 +33,7 @@ export interface Photo extends PhotoFile {
   time: string; // HH:MM
   thumbUrl: string;
   displayUrl: string;
+  videoUrl?: string;
   index: number; // position in the album, in time order
 }
 
@@ -109,6 +114,7 @@ async function fetchAlbum(id: string): Promise<Album> {
     time: p.takenAt?.slice(11, 16) ?? '',
     thumbUrl: `${dir}generated/${p.thumb}${p.v ? `?v=${p.v}` : ''}`,
     displayUrl: `${dir}generated/${p.display}${p.v ? `?v=${p.v}` : ''}`,
+    videoUrl: p.video ? `${dir}generated/${p.video}${p.v ? `?v=${p.v}` : ''}` : undefined,
     index,
   }));
 
@@ -210,8 +216,16 @@ export function timeRange(photos: Photo[]): string {
 
 export function photoAlt(album: Album, p: Photo): string {
   const place = album.placeById.get(p.placeId);
-  if (p.caption) return p.caption;
-  return isDated(p.day) ? `${place?.name ?? 'Photo'}, ${dayLabel(p.day)} ${p.time}` : `${place?.name ?? 'Photo'}, date unknown`;
+  const text =
+    p.caption ||
+    (isDated(p.day) ? `${place?.name ?? 'Photo'}, ${dayLabel(p.day)} ${p.time}` : `${place?.name ?? 'Photo'}, date unknown`);
+  return p.videoUrl ? `Video (${formatDuration(p.duration)}): ${text}` : text;
+}
+
+/** 95.2 -> "1:35" */
+export function formatDuration(seconds: number | undefined): string {
+  const s = Math.round(seconds ?? 0);
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 }
 
 export const DAY_COLORS = ['#c0562b', '#2f74b5', '#2e8b57', '#8e4fbf', '#b8860b', '#c2417a'];

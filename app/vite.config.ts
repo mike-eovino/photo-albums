@@ -22,7 +22,7 @@ function albumIndex(): string {
   return JSON.stringify({ albums: albumIds() });
 }
 
-const MIME: Record<string, string> = { '.json': 'application/json', '.webp': 'image/webp' };
+const MIME: Record<string, string> = { '.json': 'application/json', '.webp': 'image/webp', '.mp4': 'video/mp4' };
 
 // Serves albums/<id>/{album,places,captions}.json and albums/<id>/generated/** in dev,
 // and copies only those files into dist/albums/ on build.
@@ -51,8 +51,31 @@ function albumsPlugin(): Plugin {
           ((rest.length === 0 && PUBLIC_FILES.includes(first ?? '')) ||
             (first === PUBLIC_DIR && rest.length > 0 && !PRIVATE_GENERATED.includes(rest.join('/'))));
         const file = path.resolve(ALBUMS_DIR, rel);
-        if (!allowed || !file.startsWith(ALBUMS_DIR + path.sep) || !fs.existsSync(file)) return next();
+        if (!allowed || !file.startsWith(ALBUMS_DIR + path.sep)) return next();
+        if (!fs.existsSync(file)) {
+          // A real 404, as GitHub Pages gives, so the app's fallback for optional files (events.json) works.
+          res.statusCode = 404;
+          return res.end();
+        }
         res.setHeader('Content-Type', MIME[path.extname(file)] ?? 'application/octet-stream');
+        res.setHeader('Accept-Ranges', 'bytes');
+        // Videos are fetched in byte ranges (Safari won't play without them), like GitHub Pages serves them.
+        const size = fs.statSync(file).size;
+        const range = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range ?? '');
+        if (range && (range[1] || range[2])) {
+          const start = range[1] ? Number(range[1]) : Math.max(0, size - Number(range[2]));
+          const end = range[1] && range[2] ? Math.min(Number(range[2]), size - 1) : size - 1;
+          if (start > end || start >= size) {
+            res.statusCode = 416;
+            res.setHeader('Content-Range', `bytes */${size}`);
+            return res.end();
+          }
+          res.statusCode = 206;
+          res.setHeader('Content-Range', `bytes ${start}-${end}/${size}`);
+          res.setHeader('Content-Length', String(end - start + 1));
+          return void fs.createReadStream(file, { start, end }).pipe(res);
+        }
+        res.setHeader('Content-Length', String(size));
         fs.createReadStream(file).pipe(res);
       });
     },

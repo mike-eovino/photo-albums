@@ -1,6 +1,12 @@
 # Original photos: full resolution with GPS/EXIF. Kept local, never committed.
 # `npm run photos` writes EXIF-free copies to albums/<id>/generated/, which are committed.
 albums/*/originals/
+# Safety net: videos dropped straight into an album folder (outside originals/).
+# Web copies in albums/*/generated/videos/ are committed.
+albums/*/*.mp4
+albums/*/*.MP4
+albums/*/*.mov
+albums/*/*.MOV
 *.jpg
 *.JPG
 *.jpeg

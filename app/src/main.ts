@@ -7,6 +7,7 @@ import {
   dayLabel,
   esc,
   eventListHtml,
+  formatDuration,
   isDated,
   eventsFor,
   loadAlbum,
@@ -31,6 +32,14 @@ interface Route {
   album?: string;
   photo?: string;
   params: URLSearchParams;
+}
+
+
+/** "217 photos · 6 videos", or just "64 photos" when there are no videos. */
+function mediaCount(a: Album): string {
+  const videos = a.photos.filter((p) => p.videoUrl).length;
+  const photos = a.photos.length - videos;
+  return `${photos} photos` + (videos ? ` · ${videos} video${videos === 1 ? '' : 's'}` : '');
 }
 
 function parseRoute(): Route {
@@ -116,7 +125,7 @@ async function renderHome() {
             <div class="album-card-body">
               <h2>${esc(a.title)}</h2>
               ${a.titleLocal ? `<div class="local" lang="${esc(a.localLanguage?.code)}">${esc(a.titleLocal)}</div>` : ''}
-              <div class="muted">${esc(dateRange(a.days))} · ${a.photos.length} photos · ${a.places.length} places</div>
+              <div class="muted">${esc(dateRange(a.days))} · ${mediaCount(a)} · ${a.places.length} places</div>
             </div>
           </a>`,
           )
@@ -139,7 +148,11 @@ function renderAlbum(album: Album, r: Route) {
         ${album.titleLocal ? `<div class="local title-local" lang="${esc(album.localLanguage?.code)}">${esc(album.titleLocal)}</div>` : ''}
         ${album.summary ? `<p class="summary">${esc(album.summary)}</p>` : ''}
         <ul class="stats">
-          <li><strong>${album.photos.length}</strong> photos</li>
+          <li><strong>${album.photos.filter((p) => !p.videoUrl).length}</strong> photos</li>
+          ${(() => {
+            const n = album.photos.filter((p) => p.videoUrl).length;
+            return n ? `<li><strong>${n}</strong> video${n === 1 ? '' : 's'}</li>` : '';
+          })()}
           <li><strong>${album.places.length}</strong> places</li>
           <li><strong>${album.days.filter(isDated).length}</strong> days</li>
           <li><strong>${album.travelKm}</strong> km between stops</li>
@@ -226,6 +239,7 @@ function renderGallery(view: HTMLElement, album: Album, r: Route) {
                 return `<a class="thumb" href="${href(album.id, `photo/${encodeURIComponent(p.id)}`, { day, place })}" style="flex:${ar} 1 ${Math.round(ar * 190)}px">
                   <img src="${esc(p.thumbUrl)}" alt="${esc(photoAlt(album, p))}" loading="lazy" width="${p.width}" height="${p.height}" style="aspect-ratio:${ar}">
                   ${p.motion ? '<span class="badge small" aria-hidden="true">MP</span>' : ''}
+                  ${p.videoUrl ? `<span class="badge small video" aria-hidden="true">▶ ${formatDuration(p.duration)}</span>` : ''}
                 </a>`;
               })
               .join('')}

@@ -1,5 +1,16 @@
 // Full-screen photo viewer with info panel and slideshow (FR-6, FR-7, FR-15, FR-18).
-import { type Album, type Photo, dayLabel, esc, eventListHtml, eventsFor, isDated, photoAlt } from './data.ts';
+// Videos (FR-24) play in place of the image; the slideshow moves on when one ends.
+import {
+  type Album,
+  type Photo,
+  dayLabel,
+  esc,
+  eventListHtml,
+  eventsFor,
+  formatDuration,
+  isDated,
+  photoAlt,
+} from './data.ts';
 import { MiniMap } from './map.ts';
 
 const SLIDE_MS = 4000;
@@ -34,6 +45,7 @@ export class Viewer {
     this.root.innerHTML = `
       <div class="viewer-stage">
         <img class="viewer-img" alt="">
+        <video class="viewer-video" controls playsinline preload="metadata" hidden></video>
         <button type="button" class="viewer-nav prev" aria-label="Previous photo">‹</button>
         <button type="button" class="viewer-nav next" aria-label="Next photo">›</button>
         <div class="viewer-bar">
@@ -59,6 +71,15 @@ export class Viewer {
       if (this.infoOpen) this.renderInfo();
     });
 
+    const video = this.q<HTMLVideoElement>('.viewer-video');
+    video.addEventListener('ended', () => {
+      if (this.playing) this.step(1, false);
+    });
+    // A video that can't play shouldn't stall the slideshow.
+    video.addEventListener('error', () => {
+      if (this.playing && this.photo.videoUrl) this.timer = window.setTimeout(() => this.step(1, false), SLIDE_MS);
+    });
+
     const stage = this.q('.viewer-stage');
     stage.addEventListener('touchstart', (e) => (this.touchX = e.touches[0].clientX), { passive: true });
     stage.addEventListener('touchend', (e) => {
@@ -70,6 +91,8 @@ export class Viewer {
 
     document.addEventListener('keydown', (e) => {
       if (this.root.hidden) return;
+      // Let a focused video's own controls handle arrows (seek) and space (play/pause).
+      if (e.target instanceof HTMLVideoElement && ['ArrowRight', 'ArrowLeft', ' '].includes(e.key)) return;
       if (e.key === 'ArrowRight') this.step(1, true);
       else if (e.key === 'ArrowLeft') this.step(-1, true);
       else if (e.key === 'Escape') this.opts.onClose();
@@ -102,6 +125,7 @@ export class Viewer {
   close() {
     if (!this.isOpen) return;
     this.setPlaying(false);
+    this.stopVideo();
     this.root.hidden = true;
     document.body.classList.remove('no-scroll');
     this.miniMap.destroy();
@@ -116,23 +140,45 @@ export class Viewer {
     return this.opts.list[this.pos];
   }
 
-  private step(delta: number, user: boolean) {
+  private step(delta: number, _user: boolean) {
     const n = this.opts.list.length;
     this.pos = (this.pos + delta + n) % n;
-    if (user && this.playing) this.restartTimer();
     this.show();
     this.opts.onNavigate(this.photo);
+  }
+
+  private stopVideo() {
+    const video = this.q<HTMLVideoElement>('.viewer-video');
+    video.pause();
+    video.removeAttribute('src');
+    video.load(); // stop downloading
   }
 
   private show() {
     const { album, list } = this.opts;
     const p = this.photo;
     const img = this.q<HTMLImageElement>('.viewer-img');
-    img.src = p.displayUrl;
-    img.alt = photoAlt(album, p);
-    img.width = p.width;
-    img.height = p.height;
+    const video = this.q<HTMLVideoElement>('.viewer-video');
+    if (p.videoUrl) {
+      img.hidden = true;
+      img.removeAttribute('src');
+      video.hidden = false;
+      video.poster = p.displayUrl;
+      video.src = p.videoUrl;
+      video.width = p.width;
+      video.height = p.height;
+      video.setAttribute('aria-label', photoAlt(album, p));
+    } else {
+      this.stopVideo();
+      video.hidden = true;
+      img.hidden = false;
+      img.src = p.displayUrl;
+      img.alt = photoAlt(album, p);
+      img.width = p.width;
+      img.height = p.height;
+    }
     this.q('.viewer-count').textContent = `${this.pos + 1} / ${list.length}`;
+    if (this.playing) this.scheduleNext();
     // preload neighbours
     for (const d of [1, -1]) new Image().src = list[(this.pos + d + list.length) % list.length].displayUrl;
     if (this.infoOpen) this.renderInfo();
@@ -148,6 +194,7 @@ export class Viewer {
     info.innerHTML = `
       ${p.caption ? `<p class="caption">${esc(p.caption)}</p>` : ''}
       ${p.motion ? `<span class="badge" title="Pixel Motion Photo: the original includes a short video clip">Motion Photo</span>` : ''}
+      ${p.videoUrl ? `<span class="badge">Video · ${esc(formatDuration(p.duration))}</span>` : ''}
       ${
         place
           ? `<h2 class="place-name">${esc(place.name)}</h2>
@@ -158,10 +205,10 @@ export class Viewer {
           : ''
       }
       <dl class="facts">
-        ${isDated(p.day) ? `<dt>Taken</dt><dd>${esc(dayLabel(p.day, true))}, ${esc(p.time)} ${esc(album.timeZoneLabel ?? '')}</dd>` : ''}
+        ${isDated(p.day) ? `<dt>Taken</dt><dd>${esc(dayLabel(p.day, true))}, ${esc(p.time)} ${esc(album.timeZoneLabel ?? '')}${p.dateSetByHand ? ' <span class="muted">(set by hand)</span>' : ''}</dd>` : ''}
         ${
           coords
-            ? `<dt>Location</dt><dd>${esc(coords)}<br>
+            ? `<dt>Location</dt><dd>${esc(coords)}${p.locationSetByHand ? ' <span class="muted">(set by hand)</span>' : ''}<br>
                <a href="https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lon}" target="_blank" rel="noopener">Google Maps</a> ·
                <a href="https://www.openstreetmap.org/?mlat=${p.lat}&mlon=${p.lon}#map=17/${p.lat}/${p.lon}" target="_blank" rel="noopener">OpenStreetMap</a></dd>`
             : ''
@@ -182,17 +229,29 @@ export class Viewer {
     btn.textContent = on ? '❚❚ Pause' : '▶ Slideshow';
     btn.setAttribute('aria-pressed', String(on));
     this.root.classList.toggle('playing', on);
-    if (on) this.restartTimer();
-    else window.clearInterval(this.timer);
+    if (on) this.scheduleNext();
+    else window.clearTimeout(this.timer);
   }
 
-  private restartTimer() {
-    window.clearInterval(this.timer);
+  /** Slideshow: show a photo for SLIDE_MS; play a video to its end (the 'ended' listener moves on). */
+  private scheduleNext() {
+    window.clearTimeout(this.timer);
     const bar = this.q('.viewer-progress span');
     bar.style.animation = 'none';
     void bar.offsetWidth; // restart the CSS animation
-    bar.style.animation = `progress ${SLIDE_MS}ms linear infinite`;
-    this.timer = window.setInterval(() => this.step(1, false), SLIDE_MS);
+    if (this.photo.videoUrl) {
+      const video = this.q<HTMLVideoElement>('.viewer-video');
+      // Browsers may refuse to play with sound without a recent click; fall back to muted.
+      video.play().catch(() => {
+        video.muted = true;
+        return video.play().catch(() => {
+          this.timer = window.setTimeout(() => this.step(1, false), SLIDE_MS);
+        });
+      });
+      return;
+    }
+    bar.style.animation = `progress ${SLIDE_MS}ms linear`;
+    this.timer = window.setTimeout(() => this.step(1, false), SLIDE_MS);
   }
 
   private trapFocus(e: KeyboardEvent) {

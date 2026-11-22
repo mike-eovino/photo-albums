@@ -231,6 +231,7 @@ export async function updateEvents(
   existing: EventsFile,
   visits: Visit[],
   localLanguage: string,
+  opts: { lookUp: boolean; album: string },
 ): Promise<{ file: EventsFile; notes: string[]; changed: boolean }> {
   const notes: string[] = [];
   const file: EventsFile = {};
@@ -241,7 +242,13 @@ export async function updateEvents(
 
   const todo = visits.filter((v) => !file[v.key]);
   let changed = dropped.length > 0;
-  if (todo.length) {
+  if (todo.length && !opts.lookUp) {
+    // Lookups cost money, so they only run when asked for (--events).
+    notes.push(
+      `${todo.length} visit(s) have no events yet. To look them up (about $${(todo.length * 0.3).toFixed(2)}), ` +
+        `run: npm run photos -- ${opts.album} --events`,
+    );
+  } else if (todo.length) {
     const key = await apiKey();
     if (!key) {
       notes.push(
