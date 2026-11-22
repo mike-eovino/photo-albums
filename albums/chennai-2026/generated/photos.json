@@ -226,21 +226,6 @@
       "v": "1cc42c4993"
     },
     {
-      "id": "PXL_20261118_051336201",
-      "file": "PXL_20261118_051336201.jpg",
-      "takenAt": "2026-11-18T10:43:36+05:30",
-      "lat": 12.609055555555555,
-      "lon": 80.18966111111112,
-      "alt": 64.1,
-      "width": 3000,
-      "height": 4000,
-      "camera": "Pixel 10 Pro Fold",
-      "motion": false,
-      "thumb": "thumbs/PXL_20261118_051336201.webp",
-      "display": "display/PXL_20261118_051336201.webp",
-      "v": "404d375d54"
-    },
-    {
       "id": "PXL_20261118_051351923",
       "file": "PXL_20261118_051351923.MP.jpg",
       "takenAt": "2026-11-18T10:43:51+05:30",
@@ -284,21 +269,6 @@
       "thumb": "thumbs/PXL_20261118_051504102.webp",
       "display": "display/PXL_20261118_051504102.webp",
       "v": "51c72361ea"
-    },
-    {
-      "id": "PXL_20261118_051508604",
-      "file": "PXL_20261118_051508604.jpg",
-      "takenAt": "2026-11-18T10:45:08+05:30",
-      "lat": 12.608927777777778,
-      "lon": 80.18953611111111,
-      "alt": 64.1,
-      "width": 4000,
-      "height": 3000,
-      "camera": "Pixel 10 Pro Fold",
-      "motion": false,
-      "thumb": "thumbs/PXL_20261118_051508604.webp",
-      "display": "display/PXL_20261118_051508604.webp",
-      "v": "4daa8c1046"
     },
     {
       "id": "PXL_20261118_051534568",
@@ -764,21 +734,6 @@
       "thumb": "thumbs/PXL_20261118_055702890.webp",
       "display": "display/PXL_20261118_055702890.webp",
       "v": "ec81e83ae0"
-    },
-    {
-      "id": "PXL_20261118_055731661",
-      "file": "PXL_20261118_055731661.jpg",
-      "takenAt": "2026-11-18T11:27:31+05:30",
-      "lat": 12.619805555555557,
-      "lon": 80.19283055555556,
-      "alt": 57.5,
-      "width": 4000,
-      "height": 3000,
-      "camera": "Pixel 10 Pro Fold",
-      "motion": false,
-      "thumb": "thumbs/PXL_20261118_055731661.webp",
-      "display": "display/PXL_20261118_055731661.webp",
-      "v": "fccccbb04a"
     },
     {
       "id": "PXL_20261118_055739599",
